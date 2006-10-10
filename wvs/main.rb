@@ -63,15 +63,8 @@ module WVS
 
   def make_accessor(url)
     page = url.read
-    if /<meta name="generator" content="tDiary/ =~ page
-      unless /<span class="adminmenu"><a href="(update.rb\?edit=true;year=(\d+);month=(\d+);day=(\d+))">/ =~ page
-        err "update href not found in tDiary page."
-      end
-      update_url = url + $1
-      year = $2
-      month = $3
-      day = $4
-      TDiary.checkout(update_url)
+    if ret = TDiary.checkout_if_possible(page)
+      ret
     else
       err "unknown repository type : #{url}"
     end

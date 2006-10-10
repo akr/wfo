@@ -4,6 +4,21 @@ require 'escape'
 require 'net/http'
 
 class WVS::TDiary
+  def self.checkout_if_possible(page)
+    if /<meta name="generator" content="tDiary/ =~ page
+      unless /<span class="adminmenu"><a href="(update.rb\?edit=true;year=(\d+);month=(\d+);day=(\d+))">/ =~ page
+        raise "update href not found in tDiary page : #{url}"
+      end
+      update_url = page.base_uri + $1
+      year = $2
+      month = $3
+      day = $4
+      self.checkout(update_url)
+    else
+      nil
+    end
+  end
+
   def self.checkout(update_url)
     update_page_str = update_url.read
     page_url = update_page_str.base_uri
