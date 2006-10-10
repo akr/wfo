@@ -31,7 +31,7 @@ class WVS::TDiary
     submit_enctype = submit_enctype.downcase
     referer = update_url
     successful = successful_controls(form)
-    self.new(submit_url, submit_method, submit_enctype, referer, successful)
+    self.new(update_url, submit_url, submit_method, submit_enctype, referer, successful)
   end
 
   def self.find_replace_form(page)
@@ -110,7 +110,8 @@ class WVS::TDiary
     result
   end
 
-  def initialize(submit_url, submit_method, submit_enctype, referer, controls)
+  def initialize(update_url, submit_url, submit_method, submit_enctype, referer, controls)
+    @update_url = update_url
     @submit_url = submit_url
     @submit_method = submit_method
     @submit_enctype = submit_enctype
@@ -145,5 +146,9 @@ class WVS::TDiary
     m = @controls.assoc('month')[1]
     d = @controls.assoc('day')[1]
     "#{y}-#{m}-#{d}"
+  end
+
+  def reload
+    self.class.checkout(@update_url)
   end
 end

@@ -56,6 +56,16 @@ class WVS::WorkArea
     @filename.open('rb') {|f| f.read }
   end
 
+  def local_text=(text)
+    @filename.open('wb') {|f| f.write text }
+  end
+
+  def make_backup(text)
+    backup_filename = @filename.dirname + (".~" + @filename.basename.to_s)
+    backup_filename.open("wb") {|f| f.write text }
+    backup_filename
+  end
+
   def modified?
     self.original_text != self.local_text
   end

@@ -101,8 +101,17 @@ module WVS
     as.each {|w, accessor, local_text|
       accessor.replace_text local_text
       accessor.commit
-      w.original_text = local_text
-      w.store_info
+      accessor2 = accessor.reload
+      if accessor2.current_text != local_text
+        backup_filename = w.make_backup(local_text)
+        puts "commited not exactly.  local file backup: #{backup_filename}"
+        w.local_text = accessor2.current_text
+        w.original_text = accessor2.current_text
+        w.store
+      else
+        w.original_text = local_text
+        w.store_info
+      end
       puts w.filename
     }
   end
