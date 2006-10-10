@@ -1,9 +1,9 @@
 # usage:
-#   wvs co [options] URL [local-filename]
-#   wvs st [options] [local-filename...]
-#   wvs up [options] [local-filename...]
-#   wvs ci [options] [local-filename...]
-#   wvs di [options] [local-filename...]
+#   wvs checkout [options] URL [local-filename]
+#   wvs status [options] [local-filename...]
+#   wvs update [options] [local-filename...]
+#   wvs commit [options] [local-filename...]
+#   wvs diff [options] [local-filename...]
 
 $KCODE = 'e'
 
@@ -36,7 +36,7 @@ module WVS
       do_status ARGV
     when 'update', 'up'
       do_update ARGV
-    when 'commit', 'ci'
+    when 'commit', 'checkin', 'ci'
       do_commit ARGV
     when 'diff', 'di'
       do_diff ARGV
