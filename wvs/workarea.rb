@@ -21,7 +21,6 @@ class WVS::WorkArea
       @info_path.open('rb') {|f|
         @info = Marshal.load(f)
       }
-      require "wvs/repo/#{@info.fetch('accessor_class')}"
       @accessor_path.open('rb') {|f|
         @accessor = Marshal.load(f)
       }
