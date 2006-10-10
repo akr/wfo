@@ -45,20 +45,24 @@ module WVS
     end
     accessor = make_accessor(url)
     if !local_filename
-      recommended_filename = accessor.recommended_filename
-      if !WorkArea.has?(recommended_filename)
-        local_filename = recommended_filename
-      else
-        n = 1
-        begin
-          tmp = "#{recommended_filename}_#{n}"
-          n += 1
-        end while WorkArea.has?(tmp)
-        local_filename = tmp
-      end
+      local_filename = make_local_filename(accessor.recommended_filename)
     end
     workarea = WorkArea.new(local_filename, accessor)
     workarea.store
+  end
+
+  def make_local_filename(recommended_filename)
+    if !WorkArea.has?(recommended_filename)
+      local_filename = recommended_filename
+    else
+      n = 1
+      begin
+        tmp = "#{recommended_filename}_#{n}"
+        n += 1
+      end while WorkArea.has?(tmp)
+      local_filename = tmp
+    end
+    local_filename
   end
 
   def make_accessor(url)
