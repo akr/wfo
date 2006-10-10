@@ -1,9 +1,9 @@
 # usage:
-#   wvs checkout [options] URL [local-filename]
-#   wvs status [options] [local-filename...]
-#   wvs update [options] [local-filename...]
-#   wvs commit [options] [local-filename...]
-#   wvs diff [options] [local-filename...]
+#   wvs checkout URL [local-filename]
+#   wvs status [-u] [local-filename...]
+#   wvs update [local-filename...]
+#   wvs commit [local-filename...]
+#   wvs diff [-u] [local-filename...]
 
 $KCODE = 'e'
 
@@ -207,19 +207,34 @@ module WVS
   end
 
   def do_diff(argv)
+    opt = OptionParser.new
+    opt.banner = 'Usage: wvs diff [options] [local-filename...]'
+    opt_u = false; opt.def_option('-u', 'update check') { opt_u = true }
+    opt.def_option('-h', 'help') { puts opt; exit 0 }
+    opt.parse!(argv)
     ws = argv_to_workareas(argv)
+    no_diff = true
     ws.each {|w|
       local_text = w.local_text
-      original_text = w.original_text
-      if original_text != local_text
-        original_file = tempfile("wvs.original", original_text)
+      if opt_u
+        accessor = make_accessor(w.url)
+        other_text = accessor.current_text
+        other_label = "#{w.filename} (remote)"
+      else
+        other_text = w.original_text
+        other_label = "#{w.filename} (original)"
+      end
+      if other_text != local_text
+        no_diff = false
+        other_file = tempfile("wvs.other", other_text)
         local_file = tempfile("wvs.local", local_text)
         command = ['diff', '-u',
-          "--label=#{w.filename}", original_file.path,
+          "--label=#{other_label}", other_file.path,
           "--label=#{w.filename}", local_file.path]
         system(Escape.shell_command(command))
       end
     }
+    exit no_diff
   end
 
   def argv_to_workareas(argv)
