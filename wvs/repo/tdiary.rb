@@ -1,22 +1,25 @@
-require 'cgi'
 require 'htree'
 require 'escape'
 require 'net/http'
 
-class WVS::TDiary
+class WVS::TDiary < WVS::Repo
   def self.checkout_if_possible(page)
     if /<meta name="generator" content="tDiary/ =~ page
-      unless /<span class="adminmenu"><a href="(update.rb\?edit=true;year=(\d+);month=(\d+);day=(\d+))">/ =~ page
-        raise "update href not found in tDiary page : #{url}"
-      end
-      update_url = page.base_uri + $1
-      year = $2
-      month = $3
-      day = $4
-      self.checkout(update_url)
+      try_checkout(page)
     else
       nil
     end
+  end
+
+  def self.try_checkout(page)
+    unless /<span class="adminmenu"><a href="(update.rb\?edit=true;year=(\d+);month=(\d+);day=(\d+))">/ =~ page
+      raise "update href not found in tDiary page : #{url}"
+    end
+    update_url = page.base_uri + $1
+    year = $2
+    month = $3
+    day = $4
+    self.checkout(update_url)
   end
 
   def self.checkout(update_url)
