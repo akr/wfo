@@ -47,7 +47,7 @@ module WVS
     if !local_filename
       local_filename = make_local_filename(accessor.recommended_filename)
     end
-    workarea = WorkArea.new(local_filename, accessor)
+    workarea = WorkArea.new(local_filename, url, accessor.current_text)
     workarea.store
   end
 
@@ -84,8 +84,25 @@ module WVS
       ws = argv.map {|n| WorkArea.new(n) }
     end
     ws.reject! {|w| !w.modified? }
+    up_to_date = true
+    as = []
     ws.each {|w|
-      w.commit
+      accessor = make_accessor(w.url)
+      remote_text = accessor.current_text
+      local_text = w.local_text
+      original_text = w.original_text
+      if remote_text != original_text
+        puts "not up-to-date : #{w.filename}"
+        up_to_date = false
+      end
+      as << [w, accessor, local_text]
+    }
+    exit 1 if !up_to_date
+    as.each {|w, accessor, local_text|
+      accessor.replace_text local_text
+      accessor.commit
+      w.original_text = local_text
+      w.store_info
       puts w.filename
     }
   end
