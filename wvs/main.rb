@@ -15,6 +15,8 @@ end
 
 require 'wvs/workarea'
 
+require 'wvs/repo/tdiary'
+
 module WVS
   module_function
 
@@ -68,7 +70,6 @@ module WVS
       year = $2
       month = $3
       day = $4
-      require "wvs/repo/tdiary"
       TDiary.checkout(update_url)
     else
       err "unknown repository type : #{url}"
