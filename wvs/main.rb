@@ -1,8 +1,7 @@
 # usage:
 #   wvs co [options] URL [local-filename]
 #   wvs ci [options] [local-filename...]
-
-#   wvs up [options] [local-filename...]
+#   wvs st [options] [local-filename...]
 
 $KCODE = 'e'
 
@@ -30,6 +29,8 @@ module WVS
     case subcommand
     when 'checkout', 'co'
       do_checkout ARGV
+    when 'status', 'stat', 'st'
+      do_status ARGV
     when 'commit', 'ci'
       do_commit ARGV
     else
@@ -65,24 +66,31 @@ module WVS
     local_filename
   end
 
-  def make_accessor(url)
-    page = url.read
-    if ret = TDiary.checkout_if_possible(page)
-      ret
-    else
-      err "unknown repository type : #{url}"
-    end
+  def do_status(argv)
+    ws = argv_to_workareas(argv)
+    ws.each {|w|
+      accessor = make_accessor(w.url)
+      remote_text = accessor.current_text
+      local_text = w.local_text
+      original_text = w.original_text
+      if original_text == local_text
+        if original_text == remote_text
+          # not interesting.
+        else
+          puts "#{w.filename}: needs-update"
+        end
+      else
+        if original_text == remote_text
+          puts "#{w.filename}: localy-modified"
+        else
+          puts "#{w.filename}: needs-merge"
+        end
+      end
+    }
   end
 
   def do_commit(argv)
-    ws = []
-    if argv.empty?
-      WorkArea.each_filename {|n|
-        ws << WorkArea.new(n)
-      }
-    else
-      ws = argv.map {|n| WorkArea.new(n) }
-    end
+    ws = argv_to_workareas(argv)
     ws.reject! {|w| !w.modified? }
     up_to_date = true
     as = []
@@ -115,6 +123,28 @@ module WVS
       puts w.filename
     }
   end
+
+  def argv_to_workareas(argv)
+    ws = []
+    if argv.empty?
+      WorkArea.each_filename {|n|
+        ws << WorkArea.new(n)
+      }
+    else
+      ws = argv.map {|n| WorkArea.new(n) }
+    end
+    ws
+  end
+
+  def make_accessor(url)
+    page = url.read
+    if ret = TDiary.checkout_if_possible(page)
+      ret
+    else
+      err "unknown repository type : #{url}"
+    end
+  end
+
 end
 
 WVS.main
