@@ -3,6 +3,7 @@
 #   wvs st [options] [local-filename...]
 #   wvs up [options] [local-filename...]
 #   wvs ci [options] [local-filename...]
+#   wvs di [options] [local-filename...]
 
 $KCODE = 'e'
 
@@ -37,6 +38,8 @@ module WVS
       do_update ARGV
     when 'commit', 'ci'
       do_commit ARGV
+    when 'diff', 'di'
+      do_diff ARGV
     else
       err "unknown subcommand : #{subcommand}"
     end
@@ -123,16 +126,17 @@ module WVS
   end
 
   def merge(local_text, original_text, remote_text)
-    original_file = Tempfile.new("wvs.original")
-    original_file.write original_text
-    original_file.flush
-    local_file = Tempfile.new("wvs.local")
-    local_file.write local_text
-    local_file.flush
-    remote_file = Tempfile.new("wvs.remote")
-    remote_file.write remote_text
-    remote_file.flush
-    merged = IO.popen(Escape.shell_command(['diff3', '-mE', '-L', 'edited by you', '-L', 'before edited', '-L', 'edited by others', local_file.path, original_file.path, remote_file.path]), 'r') {|f|
+    original_file = tempfile("wvs.original", original_text)
+    local_file = tempfile("wvs.local", local_text)
+    remote_file = tempfile("wvs.remote", remote_text)
+    command = ['diff3', '-mE',
+      '-L', 'edited by you',
+      '-L', 'before edited',
+      '-L', 'edited by others',
+      local_file.path,
+      original_file.path,
+      remote_file.path]
+    merged = IO.popen(Escape.shell_command(command), 'r') {|f|
       f.read
     }
     status = $?
@@ -187,6 +191,22 @@ module WVS
     }
   end
 
+  def do_diff(argv)
+    ws = argv_to_workareas(argv)
+    ws.each {|w|
+      local_text = w.local_text
+      original_text = w.original_text
+      if original_text != local_text
+        original_file = tempfile("wvs.original", original_text)
+        local_file = tempfile("wvs.local", local_text)
+        command = ['diff', '-u',
+          "--label=#{w.filename}", original_file.path,
+          "--label=#{w.filename}", local_file.path]
+        system(Escape.shell_command(command))
+      end
+    }
+  end
+
   def argv_to_workareas(argv)
     ws = []
     if argv.empty?
@@ -206,6 +226,13 @@ module WVS
     else
       err "unknown repository type : #{url}"
     end
+  end
+
+  def tempfile(basename, content)
+    t = Tempfile.new(basename)
+    t.write content
+    t.flush
+    t
   end
 
 end
