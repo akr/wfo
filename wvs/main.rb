@@ -52,6 +52,7 @@ module WVS
         n = 1
         begin
           tmp = "#{recommended_filename}_#{n}"
+          n += 1
         end while WorkArea.has?(tmp)
         local_filename = tmp
       end
