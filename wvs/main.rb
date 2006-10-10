@@ -1,5 +1,5 @@
 # usage:
-#   wvs checkout URL [local-filename]
+#   wvs checkout [-t repo_type] URL [local-filename]
 #   wvs status [-u] [local-filename...]
 #   wvs update [local-filename...]
 #   wvs commit [local-filename...]
@@ -17,6 +17,7 @@ end
 
 require 'wvs/workarea'
 
+require 'wvs/repo'
 require 'wvs/repo/tdiary'
 
 module WVS
@@ -46,16 +47,25 @@ module WVS
   end
 
   def do_checkout(argv)
+    opt = OptionParser.new
+    opt.banner = 'Usage: wvs checkout [-t repo_type] URL [local-filename]'
+    opt_t = nil; opt.def_option('-t repo_type', "repository type (#{Repo.available_types})") {|v|
+      opt_t = v
+    }
+    opt.def_option('-h', 'help') { puts opt; exit 0 }
+    opt.parse!(argv)
+
     url = URI(argv.shift)
     local_filename = argv.shift
     if local_filename && WorkArea.has?(local_filename)
       err "local file already exists : #{local_filename.inspect}"
     end
-    accessor = make_accessor(url)
+    accessor = Repo.make_accessor(url, opt_t)
+
     if !local_filename
       local_filename = make_local_filename(accessor.recommended_filename)
     end
-    workarea = WorkArea.new(local_filename, url, accessor.current_text)
+    workarea = WorkArea.new(local_filename, accessor.class.type, url, accessor.current_text)
     workarea.store
   end
 
@@ -82,7 +92,7 @@ module WVS
     ws = argv_to_workareas(argv)
     if opt_u
       ws.each {|w|
-        accessor = make_accessor(w.url)
+        accessor = w.make_accessor
         remote_text = accessor.current_text
         local_text = w.local_text
         original_text = w.original_text
@@ -114,7 +124,7 @@ module WVS
   def do_update(argv)
     ws = argv_to_workareas(argv)
     ws.each {|w|
-      accessor = make_accessor(w.url)
+      accessor = w.make_accessor
       remote_text = accessor.current_text
       local_text = w.local_text
       original_text = w.original_text
@@ -177,7 +187,7 @@ module WVS
     up_to_date = true
     as = []
     ws.each {|w|
-      accessor = make_accessor(w.url)
+      accessor = w.make_accessor
       remote_text = accessor.current_text
       local_text = w.local_text
       original_text = w.original_text
@@ -217,7 +227,7 @@ module WVS
     ws.each {|w|
       local_text = w.local_text
       if opt_u
-        accessor = make_accessor(w.url)
+        accessor = w.make_accessor
         other_text = accessor.current_text
         other_label = "#{w.filename} (remote)"
       else
@@ -247,15 +257,6 @@ module WVS
       ws = argv.map {|n| WorkArea.new(n) }
     end
     ws
-  end
-
-  def make_accessor(url)
-    page = url.read
-    if ret = TDiary.checkout_if_possible(page)
-      ret
-    else
-      err "unknown repository type : #{url}"
-    end
   end
 
   def tempfile(basename, content)

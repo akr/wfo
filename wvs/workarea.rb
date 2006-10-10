@@ -7,7 +7,7 @@ class WVS::WorkArea
     info_path.exist?
   end
 
-  def initialize(filename, url=nil, original_text=nil)
+  def initialize(filename, repository_type=nil, url=nil, original_text=nil)
     @filename = Pathname.new(filename)
     @info_path = @filename.dirname + '.wvs' + "i_#{@filename.basename}.gz"
     if url
@@ -15,6 +15,7 @@ class WVS::WorkArea
       @url = url.dup
       @info = {}
       @info['URL'] = @url
+      @info['repository_type'] = repository_type.dup
       @info['original_text'] = original_text.dup
     else
       raise "not exists : #{@info_path}" if !@info_path.exist?
@@ -25,6 +26,10 @@ class WVS::WorkArea
     end
   end
   attr_reader :filename, :url
+
+  def make_accessor
+    WVS::Repo.make_accessor(@info['URL'], @info['repository_type'])
+  end
 
   def store
     store_info
