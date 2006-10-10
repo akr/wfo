@@ -1,22 +1,24 @@
+require 'zlib'
+
 class WVS::WorkArea
   def self.has?(filename)
     n = Pathname.new(filename)
-    info_path = n.dirname + '.wvs' + "i_#{n.basename}"
+    info_path = n.dirname + '.wvs' + "i_#{n.basename}.gz"
     info_path.exist?
   end
 
   def initialize(filename, url=nil, original_text=nil)
     @filename = Pathname.new(filename)
-    @info_path = @filename.dirname + '.wvs' + "i_#{@filename.basename}"
+    @info_path = @filename.dirname + '.wvs' + "i_#{@filename.basename}.gz"
     if url
       raise "alread exists : #{@info_path}" if @info_path.exist?
       @url = url.dup
       @info = {}
       @info['URL'] = @url
-      @info['original_text'] = original_text
+      @info['original_text'] = original_text.dup
     else
       raise "not exists : #{@info_path}" if !@info_path.exist?
-      @info_path.open('rb') {|f|
+      Zlib::GzipReader.open(@info_path) {|f|
         @info = Marshal.load(f)
       }
       @url = @info['URL']
@@ -31,7 +33,7 @@ class WVS::WorkArea
 
   def store_info
     @info_path.dirname.mkpath
-    @info_path.open('wb') {|f|
+    Zlib::GzipWriter.open(@info_path) {|f|
       Marshal.dump(@info, f)
     }
   end
@@ -60,8 +62,8 @@ class WVS::WorkArea
 
   def self.each_filename(dir=Pathname.new('.'))
     (dir + '.wvs').each_entry {|n|
-      if /\Ai_/ =~ n.basename.to_s
-        yield dir + $'
+      if /\Ai_(.*)\.gz\z/ =~ n.basename.to_s
+        yield dir + $1
       end
     }
   end
