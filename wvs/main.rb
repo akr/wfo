@@ -74,26 +74,41 @@ module WVS
   end
 
   def do_status(argv)
+    opt = OptionParser.new
+    opt.banner = 'Usage: wvs status [options] [local-filename...]'
+    opt_u = false; opt.def_option('-u', 'update check') { opt_u = true }
+    opt.def_option('-h', 'help') { puts opt; exit 0 }
+    opt.parse!(argv)
     ws = argv_to_workareas(argv)
-    ws.each {|w|
-      accessor = make_accessor(w.url)
-      remote_text = accessor.current_text
-      local_text = w.local_text
-      original_text = w.original_text
-      if original_text == local_text
-        if original_text == remote_text
-          # not interesting.
+    if opt_u
+      ws.each {|w|
+        accessor = make_accessor(w.url)
+        remote_text = accessor.current_text
+        local_text = w.local_text
+        original_text = w.original_text
+        if original_text == local_text
+          if original_text == remote_text
+            # not interesting.
+          else
+            puts "#{w.filename}: needs-update"
+          end
         else
-          puts "#{w.filename}: needs-update"
+          if original_text == remote_text
+            puts "#{w.filename}: localy-modified"
+          else
+            puts "#{w.filename}: needs-merge"
+          end
         end
-      else
-        if original_text == remote_text
+      }
+    else
+      ws.each {|w|
+        local_text = w.local_text
+        original_text = w.original_text
+        if original_text != local_text
           puts "#{w.filename}: localy-modified"
-        else
-          puts "#{w.filename}: needs-merge"
         end
-      end
-    }
+      }
+    end
   end
 
   def do_update(argv)
