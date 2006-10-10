@@ -104,7 +104,7 @@ class WVS::TDiary
         next if control.get_attr('disabled')
         result << [:text, name, control.extract_text.to_s]
       else
-        raise "unexpected control name : #{control.name}"
+        raise "unexpected control : #{control.name}"
       end
     }
     result
@@ -127,8 +127,8 @@ class WVS::TDiary
   end
 
   def commit
-    raise "not POST method" if @submit_method != 'post'
-    raise "not application/x-www-form-urlencoded enctype" if @submit_enctype != 'application/x-www-form-urlencoded'
+    raise "unexpected method: #{@submit_method} (POST expected)" if @submit_method != 'post'
+    raise "unexpected enctype: #{@submit_enctype} (application/x-www-form-urlencoded expected)" if @submit_enctype != 'application/x-www-form-urlencoded'
     header = {
       'Referer' => @referer.to_s,
       'Content-Type' => 'application/x-www-form-urlencoded; charset=EUC-JP'
