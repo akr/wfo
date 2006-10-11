@@ -23,7 +23,7 @@ class WVS::TDiary < WVS::Repo
   end
 
   def self.checkout(update_url)
-    update_page_str = update_url.read
+    update_page_str = WVS::WebClient.read(update_url)
     page_url = update_page_str.base_uri
     update_page = HTree(update_page_str)
     form = find_replace_form(update_page)
