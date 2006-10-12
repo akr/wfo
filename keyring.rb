@@ -82,7 +82,7 @@ class KeyRing
         end
       }
     }
-    nil
+    raise "authentication information not found in #{@dir}: #{KeyRing.encode_strings protection_domain}" 
   end
 
   def self.typekey_protection_domain
