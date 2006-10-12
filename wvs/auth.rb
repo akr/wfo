@@ -29,7 +29,7 @@ module WVS::Auth
 
     resp = typekey_login(webclient, typekey_uri)
     return nil if resp.code != '302'
-    destination_uri = URI(resp['Location'])
+    #destination_uri = URI(resp['Location'])
 
     # use uri instead of destination_uri because www.codeblog.org's login.pl
     # had a URI escaping problem.
