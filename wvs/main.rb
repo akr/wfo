@@ -68,6 +68,7 @@ module WVS
       end
       workarea = WorkArea.new(local_filename, accessor.class.type, url, accessor.current_text)
       workarea.store
+      puts local_filename
     }
   end
 
