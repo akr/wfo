@@ -42,7 +42,7 @@
 # * A string not containing a white space and beginning with a digit or alphabet.
 #   /[0-9A-Za-z][!-~]*/ 
 # * A string quoted by double quote <">.
-#   The contents may contain printable ASCII character including space and wescape sequences \\, \" and \xhh.
+#   The contents may contain printable ASCII character including space and wescape sequences \\, \" and \xHH.
 #   /"((?:[ !#-\[\]-~]|\\["\\]|\\x[0-9a-fA-F][0-9a-fA-F])*)"/
 
 require 'vanish'
