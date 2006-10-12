@@ -139,7 +139,7 @@ class KeyRing
         s = $'
         r << $2.gsub(/\\(["\\])|\\x([0-9a-fA-F][0-9a-fA-F])/) { $1 || [$2].pack("H2") }
       else
-        raise "strings syntax error: #{str.inspect}"
+        raise ArgumentError, "strings syntax error: #{str.inspect}"
       end
     end
     r
@@ -170,7 +170,7 @@ class KeyRing
         s = ""
         r << s
         while true
-          raise "strings syntax error" if i == len
+          raise ArgumentError, "strings syntax error" if i == len
           ch = str[i]
           i += 1
           case ch
@@ -186,31 +186,31 @@ class KeyRing
               when ?x
                 if i+1 < len
                   ch1 = str[i]
-                  raise "strings syntax error" if /\A[0-9a-fA-F]\z/n !~ ch1.chr
+                  raise ArgumentError, "strings syntax error" if /\A[0-9a-fA-F]\z/n !~ ch1.chr
                   ch2 = str[i+1]
-                  raise "strings syntax error" if /\A[0-9a-fA-F]\z/n !~ ch2.chr
+                  raise ArgumentError, "strings syntax error" if /\A[0-9a-fA-F]\z/n !~ ch2.chr
                   s << (ch1.chr.to_i(16) * 16 + ch2.chr.to_i(16)).chr
                   i += 2
                 else
-                  raise "strings syntax error"
+                  raise ArgumentError, "strings syntax error"
                 end
               else
-                raise "strings syntax error"
+                raise ArgumentError, "strings syntax error"
               end
             else
-              raise "strings syntax error"
+              raise ArgumentError, "strings syntax error"
             end
           when ?\s, ?\!, ?\#..?\[, ?\]..?\~
             s << ch.chr
           else
-            raise "strings syntax error"
+            raise ArgumentError, "strings syntax error"
           end
         end
         if i < len && !Spaces.include?(str[i])
-          raise "strings syntax error"
+          raise ArgumentError, "strings syntax error"
         end
       else
-        raise "strings syntax error"
+        raise ArgumentError, "strings syntax error"
       end
     end
     r
