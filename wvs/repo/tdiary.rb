@@ -12,22 +12,21 @@ class WVS::TDiary < WVS::Repo
   end
 
   def self.try_checkout(page)
-    unless /<span class="adminmenu"><a href="(update.rb\?edit=true;year=(\d+);month=(\d+);day=(\d+))">/ =~ page
-      raise "update href not found in tDiary page : #{url}"
+    unless /<span class="adminmenu"><a href="(update.rb\?edit=true;year=\d+;month=\d+;day=\d+)">/ =~ page
+      raise "update link not found in tDiary page : #{page.base_uri}"
     end
     update_url = page.base_uri + $1
-    year = $2
-    month = $3
-    day = $4
     self.checkout(update_url)
   end
 
   def self.checkout(update_url)
     update_page_str = WVS::WebClient.read(update_url)
     update_page_tree = HTree(update_page_str)
+    if update_page_str.base_uri != update_url
+      raise "tDiary update page redirected"
+    end
     form = find_replace_form(update_page_tree, update_url)
-    form = WVS::Form.make(update_page_str.base_uri, form)
-    self.new(form, update_url, update_page_str.base_uri)
+    self.new(form, update_url)
   end
 
   def self.find_replace_form(page, uri)
@@ -35,17 +34,16 @@ class WVS::TDiary < WVS::Repo
       form.traverse_element('{http://www.w3.org/1999/xhtml}input') {|input|
         if input.get_attr('type') == 'submit' &&
            input.get_attr('name') == "replace"
-          return form
+          return WVS::Form.make(uri, form)
         end
       }
     }
     raise "replace form not found in #{uri}"
   end
 
-  def initialize(form, update_url, referer)
+  def initialize(form, uri)
     @form = form
-    @update_url = update_url
-    @referer = referer
+    @uri = uri
   end
 
   def current_text
@@ -58,7 +56,7 @@ class WVS::TDiary < WVS::Repo
 
   def commit
     req = @form.make_request('replace')
-    req["Referer"] = @referer.to_s
+    req["Referer"] = @uri.to_s
     resp = WVS::WebClient.do_request(@form.action_uri, req)
     return if resp.code == '200'
     raise "HTTP POST error: #{resp.code} #{resp.message}"
@@ -72,6 +70,6 @@ class WVS::TDiary < WVS::Repo
   end
 
   def reload
-    self.class.checkout(@update_url)
+    self.class.checkout(@uri)
   end
 end
