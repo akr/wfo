@@ -90,7 +90,9 @@ class KeyRing
         end
       }
     }
-    raise "authentication information not found in #{@dir}: #{KeyRing.encode_strings protection_domain}" 
+    raise AuthInfoNotFound, "authentication information not found in #{@dir}: #{KeyRing.encode_strings protection_domain}" 
+  end
+  class AuthInfoNotFound < StandardError
   end
 
   def self.typekey_protection_domain
