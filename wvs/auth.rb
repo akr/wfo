@@ -55,9 +55,12 @@ module WVS::Auth
     destination_uri = URI(resp['Location'])
     webclient.update_cookies(return_uri, resp['Set-Cookie'])
 
-    req = Net::HTTP::Get.new(destination_uri.request_uri)
-    webclient.insert_cookie_header(destination_uri, req)
+    # use uri instead of destination_uri because login.pl may have a
+    # URI escaping problem.
 
-    return destination_uri, req
+    req = Net::HTTP::Get.new(uri.request_uri)
+    webclient.insert_cookie_header(uri, req)
+
+    return uri, req
   end
 end
