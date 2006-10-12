@@ -1,3 +1,4 @@
+require 'vanish'
 require 'escape'
 require 'net/https'
 
@@ -106,11 +107,16 @@ class WVS::Form
   end
 
   def make_request(submit_name=nil)
+    secrets = []
     case @method
     when 'get'
       case @enctype
       when 'application/x-www-form-urlencoded'
         query = encode_application_x_www_form_urlencoded(submit_name)
+        secrets << query
+        request_uri = @action_uri.request_uri + "?"
+        request_uri += query
+        secrets << request_uri
         req = Net::HTTP::Get.new(@action_uri.request_uri + "?" + query)
       else
         raise "unexpected enctype: #{@enctype}"
@@ -119,6 +125,7 @@ class WVS::Form
       case @enctype
       when 'application/x-www-form-urlencoded'
         query = encode_application_x_www_form_urlencoded(submit_name)
+        secrets << query
         req = Net::HTTP::Post.new(@action_uri.request_uri)
         req.body = query
         req['Content-Type'] = 'application/x-www-form-urlencoded'
@@ -128,7 +135,17 @@ class WVS::Form
     else
       raise "unexpected method: #{@method}"
     end
-    req
+    if block_given?
+      begin
+        yield req
+      ensure
+        secrets.each {|s|
+          s.vanish!
+        }
+      end
+    else
+      req
+    end
   end
 
   def encode_application_x_www_form_urlencoded(submit_name=nil)

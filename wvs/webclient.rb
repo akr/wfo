@@ -1,6 +1,7 @@
 require 'net/https'
 require 'wvs/form'
 require 'wvs/cookie'
+require 'keyring'
 
 class WVS::WebClient
   def self.do
@@ -73,12 +74,17 @@ class WVS::WebClient
       end
     }
     return nil if !sign_in_form
-    sign_in_form.set('username', File.read(".codeblog-user"))
-    sign_in_form.set('password', File.read(".codeblog-pass"))
-    referer = typekey_uri
-    req = sign_in_form.make_request(nil)
-    req["Referer"] = referer.to_s
-    resp = do_request(sign_in_form.action_uri, req)
+    KeyRing.with_authinfo(KeyRing.typekey_protection_domain) {|username, password|
+      sign_in_form.set('username', username)
+      sign_in_form.set('password', password)
+      referer = typekey_uri
+      sign_in_form.make_request(nil) {|req|
+        req["Referer"] = referer.to_s
+        resp = do_request(sign_in_form.action_uri, req)
+      }
+    }
+    # The password vanishing is not perfect, unfortunately.
+    # arr = []; ObjectSpace.each_object(String) {|s| arr << s }; arr.each {|v| p v }
     return nil if resp.code != '302'
     codeblog_uri = nil
     cookies = []
@@ -131,6 +137,7 @@ class WVS::WebClient
         sock.post_connection_check(uri.host)
       end
       resp = h.request req
+      resp
     }
   end
 

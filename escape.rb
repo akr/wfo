@@ -36,7 +36,7 @@ module Escape
     str.gsub(%r{[^/]+}n) { uri_segment($&) }
   end
 
-  def html_form(pairs, sep=';')
+  def html_form_fast(pairs, sep=';')
     pairs.map {|k, v|
       # query-chars - pct-encoded - x-www-form-urlencoded-delimiters =
       #   unreserved / "!" / "$" / "'" / "(" / ")" / "*" / "," / ":" / "@" / "/" / "?"
@@ -53,6 +53,40 @@ module Escape
       }
       "#{k}=#{v}"
     }.join(sep)
+  end
+
+  def html_form(pairs, sep=';')
+    r = ''
+    first = true
+    pairs.each {|k, v|
+      # query-chars - pct-encoded - x-www-form-urlencoded-delimiters =
+      #   unreserved / "!" / "$" / "'" / "(" / ")" / "*" / "," / ":" / "@" / "/" / "?"
+      # query-char - pct-encoded = unreserved / sub-delims / ":" / "@" / "/" / "?"
+      # query-char = pchar / "/" / "?" = unreserved / pct-encoded / sub-delims / ":" / "@" / "/" / "?"
+      # unreserved = ALPHA / DIGIT / "-" / "." / "_" / "~"
+      # sub-delims = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
+      # x-www-form-urlencoded-delimiters = "&" / "+" / ";" / "="
+      r << sep if !first
+      first = false
+      k.each_byte {|byte|
+        ch = byte.chr
+        if %r{[^0-9A-Za-z\-\._~:/?@!\$'()*,]}n =~ ch
+          r << "%" << ch.unpack("H2")[0].upcase
+        else
+          r << ch
+        end
+      }
+      r << '='
+      v.each_byte {|byte|
+        ch = byte.chr
+        if %r{[^0-9A-Za-z\-\._~:/?@!\$'()*,]}n =~ ch
+          r << "%" << ch.unpack("H2")[0].upcase
+        else
+          r << ch
+        end
+      }
+    }
+    r
   end
 
   HTML_TEXT_ESCAPE_HASH = {

@@ -1,6 +1,4 @@
 require 'htree'
-require 'escape'
-require 'net/http'
 
 class WVS::TDiary < WVS::Repo
   def self.checkout_if_possible(page)
