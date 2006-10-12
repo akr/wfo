@@ -1,7 +1,7 @@
 # = keyring - manage authentication information in encrypted form.
 #
-# The keyring library stores authentication information such as username and passwords
-# in a keyring directory in encrypted form.
+# The keyring library stores authentication information such as username and
+# passwords in a keyring directory in encrypted form.
 #
 # The keyring directory is ~/.keyring by default.
 #
@@ -37,12 +37,15 @@
 # examine a Comment field in them.
 # So the library finds an appropriate encrypted file regardless of filenames.
 #
-# The comment and the encrypted content is a sequence of strings separated by white spaces.
+# The comment and the encrypted content is a sequence of strings separated by
+# white spaces.
 # The each strings should be one of following forms. 
-# * A string not containing a white space and beginning with a digit or alphabet.
+# * A string not containing a white space and beginning with a digit or
+#   alphabet.
 #   /[0-9A-Za-z][!-~]*/ 
-# * A string quoted by double quote <">.
-#   The contents may contain printable ASCII character including space and wescape sequences \\, \" and \xHH.
+# * A string quoted by double quote "...".
+#   The string content may contain printable ASCII character including space
+#   and wescape sequences \\, \" and \xHH.
 #   /"((?:[ !#-\[\]-~]|\\["\\]|\\x[0-9a-fA-F][0-9a-fA-F])*)"/
 
 require 'vanish'
