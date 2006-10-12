@@ -35,7 +35,6 @@ module WVS::Auth
     # had a URI escaping problem.
 
     req = Net::HTTP::Get.new(uri.request_uri)
-    webclient.insert_cookie_header(uri, req)
 
     return uri, req
   end
@@ -60,7 +59,6 @@ module WVS::Auth
     }
     # The password vanishing is not perfect, unfortunately.
     # arr = []; ObjectSpace.each_object(String) {|s| arr << s }; arr.each {|v| p v }
-    webclient.update_cookies(typekey_login_form.action_uri, resp['Set-Cookie']) if resp['Set-Cookie']
 
     if resp.code == '200' # send email address or not?
       email_form = nil
@@ -69,7 +67,6 @@ module WVS::Auth
         break
       }
       req = email_form.make_request
-      webclient.insert_cookie_header(email_form.action_uri, req)
       resp = webclient.do_request(email_form.action_uri, req)
     end
 
@@ -77,9 +74,7 @@ module WVS::Auth
     return_uri = URI(resp['Location'])
 
     req = Net::HTTP::Get.new(return_uri.request_uri)
-    webclient.insert_cookie_header(return_uri, req)
     resp = webclient.do_request(return_uri, req)
-    webclient.update_cookies(return_uri, resp['Set-Cookie'])
     resp
   end
 

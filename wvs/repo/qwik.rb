@@ -88,7 +88,6 @@ class WVS::Qwik < WVS::Repo
     return nil if resp.code != '200'
 
     req = Net::HTTP::Get.new(uri.request_uri)
-    webclient.insert_cookie_header(uri, req)
 
     return uri, req
   end

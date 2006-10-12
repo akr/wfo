@@ -68,6 +68,7 @@ class WVS::WebClient
         sock.post_connection_check(uri.host)
       end
       resp = h.request req
+      update_cookies(uri, resp['Set-Cookie']) if resp['Set-Cookie']
       resp
     }
   end
