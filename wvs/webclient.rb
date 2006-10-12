@@ -27,6 +27,7 @@ class WVS::WebClient
   def initialize
     @handler = []
     @handler << WVS::Auth.method(:codeblog_handler)
+    @handler << WVS::Qwik.method(:qwik_auth_handler)
 
     @cookies = {}
   end

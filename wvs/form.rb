@@ -32,6 +32,9 @@ class WVS::Form
         when 'checkbox'
           checked = control.get_attr('checked') ? :checked : nil
           form.add_checkbox(name, control.get_attr('value').to_s, checked)
+        when 'radio'
+          checked = control.get_attr('checked') ? :checked : nil
+          form.add_radio(name, control.get_attr('value').to_s, checked)
         else
           raise "unexpected input type : #{type}"
         end
@@ -77,6 +80,10 @@ class WVS::Form
 
   def add_checkbox(name, value, checked)
     @controls << [name, value, :checkbox, checked]
+  end
+
+  def add_radio(name, value, checked)
+    @controls << [name, value, :radio, checked]
   end
 
   def add_textarea(name, value)
@@ -158,7 +165,7 @@ class WVS::Form
           successful << [name, value]
           has_submit = true
         end
-      when :checkbox
+      when :checkbox, :radio
         checked = rest[0]
         successful << [name, value] if checked
       when :text, :textarea, :password, :hidden

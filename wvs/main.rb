@@ -20,6 +20,7 @@ require 'wvs/webclient'
 
 require 'wvs/repo'
 require 'wvs/repo/tdiary'
+require 'wvs/repo/qwik'
 
 module WVS
   module_function
@@ -73,6 +74,12 @@ module WVS
   end
 
   def make_local_filename(recommended_filename)
+    if %r{/} =~ recommended_filename
+      raise "recommended_filename contains a slash : #{recommended_filename}"
+    end
+    if recommended_filename.empty?
+      raise "recommended_filename is empty"
+    end
     if !WorkArea.has?(recommended_filename)
       local_filename = recommended_filename
     else
