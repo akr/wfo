@@ -30,6 +30,8 @@
 #
 # Now, KeyRing.with_authinfo("TypeKey") {|username, password| ... }
 # can be used to retriev the username and password.
+# It use gpg to decrypt the file.
+# So gpg may ask you a passphrase of your key.
 #
 # KeyRing.with_authinfo searches *.asc in the keyring directory and
 # examine a Comment field in them.
