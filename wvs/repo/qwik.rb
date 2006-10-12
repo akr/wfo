@@ -84,45 +84,7 @@ class WVS::Qwik < WVS::Repo
     return nil if resp.code != '302'
     typekey_uri = URI(resp['Location'])
 
-    typekey_login_form = nil
-    HTree(typekey_uri).traverse_element('{http://www.w3.org/1999/xhtml}form') {|form|
-      form = WVS::Form.make(typekey_uri, form)
-      if form.has?('username') && form.has?('password')
-        typekey_login_form = form
-        break
-      end
-    }
-    return nil if !typekey_login_form
-    KeyRing.with_authinfo(KeyRing.typekey_protection_domain) {|username, password|
-      typekey_login_form.set('username', username)
-      typekey_login_form.set('password', password)
-      typekey_login_form.make_request {|req|
-        resp = webclient.do_request(typekey_login_form.action_uri, req)
-      }
-    }
-    # The password vanishing is not perfect, unfortunately.
-    # arr = []; ObjectSpace.each_object(String) {|s| arr << s }; arr.each {|v| p v }
-    webclient.update_cookies(typekey_login_form.action_uri, resp['Set-Cookie']) if resp['Set-Cookie']
-
-    if resp.code == '200' # send email address or not?
-      email_form = nil
-      HTree(resp.body).traverse_element('{http://www.w3.org/1999/xhtml}form') {|form|
-        email_form = WVS::Form.make(typekey_login_form.action_uri, form)
-        break
-      }
-      req = email_form.make_request
-      webclient.insert_cookie_header(email_form.action_uri, req)
-      resp = webclient.do_request(email_form.action_uri, req)
-    end
-
-    return nil if resp.code != '302'
-    return_uri = URI(resp['Location'])
-
-    req = Net::HTTP::Get.new(return_uri.request_uri)
-    webclient.insert_cookie_header(return_uri, req)
-    resp = webclient.do_request(return_uri, req)
-    webclient.update_cookies(return_uri, resp['Set-Cookie'])
-
+    resp = WVS::Auth.typekey_login(webclient, typekey_uri)
     return nil if resp.code != '200'
 
     req = Net::HTTP::Get.new(uri.request_uri)
