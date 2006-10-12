@@ -118,7 +118,7 @@ class KeyRing
   end
 
   RawStrPat = /[0-9A-Za-z][!-~]*/ 
-  QuotedStrPat = /"((?:[^!#-\[\]-~]|\\["\\]|\\x[0-9a-fA-F][0-9a-fA-F])*)"/
+  QuotedStrPat = /"((?:[!#-\[\]-~]|\\["\\]|\\x[0-9a-fA-F][0-9a-fA-F])*)"/
   def self.decode_strings(str)
     s = str
     r = []
