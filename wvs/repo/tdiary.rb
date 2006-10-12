@@ -24,17 +24,10 @@ class WVS::TDiary < WVS::Repo
 
   def self.checkout(update_url)
     update_page_str = WVS::WebClient.read(update_url)
-    page_url = update_page_str.base_uri
-    update_page = HTree(update_page_str)
-    form = find_replace_form(update_page, update_url)
-    submit_url = update_url + form.get_attr('action')
-    submit_method = form.get_attr('method') || 'get'
-    submit_method = submit_method.downcase
-    submit_enctype = form.get_attr('enctype') || 'application/x-www-form-urlencoded'
-    submit_enctype = submit_enctype.downcase
-    referer = update_url
-    successful = WVS::WebClient.successful_controls(form, 'replace')
-    self.new(update_url, submit_url, submit_method, submit_enctype, referer, successful)
+    update_page_tree = HTree(update_page_str)
+    form = find_replace_form(update_page_tree, update_url)
+    form = WVS::Form.make(update_page_str.base_uri, form)
+    self.new(form, update_url, update_page_str.base_uri)
   end
 
   def self.find_replace_form(page, uri)
@@ -49,42 +42,32 @@ class WVS::TDiary < WVS::Repo
     raise "replace form not found in #{uri}"
   end
 
-  def initialize(update_url, submit_url, submit_method, submit_enctype, referer, controls)
+  def initialize(form, update_url, referer)
+    @form = form
     @update_url = update_url
-    @submit_url = submit_url
-    @submit_method = submit_method
-    @submit_enctype = submit_enctype
     @referer = referer
-    @controls = controls
   end
 
   def current_text
-    @controls.assoc('body')[1].dup
+    @form.fetch('body').dup
   end
 
   def replace_text(text)
-    @controls.assoc('body')[1] = text
+    @form.set('body', text)
   end
 
   def commit
-    raise "unexpected method: #{@submit_method} (POST expected)" if @submit_method != 'post'
-    raise "unexpected enctype: #{@submit_enctype} (application/x-www-form-urlencoded expected)" if @submit_enctype != 'application/x-www-form-urlencoded'
-    header = {
-      'Referer' => @referer.to_s,
-      'Content-Type' => 'application/x-www-form-urlencoded; charset=EUC-JP'
-    }
-    req = Net::HTTP::Post.new(@submit_url.request_uri)
-    req.body = Escape.html_form(@controls)
+    req = @form.make_request('replace')
     req["Referer"] = @referer.to_s
-    resp = WVS::WebClient.do_request(@submit_url, req)
+    resp = WVS::WebClient.do_request(@form.action_uri, req)
     return if resp.code == '200'
     raise "HTTP POST error: #{resp.code} #{resp.message}"
   end
 
   def recommended_filename
-    y = @controls.assoc('year')[1]
-    m = @controls.assoc('month')[1]
-    d = @controls.assoc('day')[1]
+    y = @form.fetch('year')
+    m = @form.fetch('month')
+    d = @form.fetch('day')
     "%d-%02d-%02d" % [y, m, d]
   end
 

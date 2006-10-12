@@ -88,13 +88,13 @@ class WVS::Form
     c[1] = value
   end
 
-  def fetch(name, value)
+  def fetch(name)
     c = @controls.assoc(name)
     raise IndexError, "no control : #{name}" if !c
     return c[1]
   end
 
-  def get(name, value)
+  def get(name)
     c = @controls.assoc(name)
     return nil if !c
     return c[1]
