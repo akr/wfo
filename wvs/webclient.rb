@@ -73,8 +73,8 @@ class WVS::WebClient
       end
     }
     return nil if !sign_in_form
-    sign_in_form.set('username', 'UUUUUUUUUUUUUU')
-    sign_in_form.set('password', 'PPPPPPPPPPPPPP')
+    sign_in_form.set('username', File.read(".codeblog-user"))
+    sign_in_form.set('password', File.read(".codeblog-pass"))
     referer = typekey_uri
     req = sign_in_form.make_request(nil)
     req["Referer"] = referer.to_s
