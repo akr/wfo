@@ -36,6 +36,14 @@
 # KeyRing.with_authinfo searches *.asc in the keyring directory and
 # examine a Comment field in them.
 # So the library finds an appropriate encrypted file regardless of filenames.
+#
+# The comment and the encrypted content is a sequence of strings separated by white spaces.
+# The each strings should be one of following forms. 
+# * A string not containing a white space and beginning with a digit or alphabet.
+#   /[0-9A-Za-z][!-~]*/ 
+# * A string quoted by double quote <">.
+#   The contents may contain printable ASCII character including space and wescape sequences \\, \" and \xhh.
+#   /"((?:[ !#-\[\]-~]|\\["\\]|\\x[0-9a-fA-F][0-9a-fA-F])*)"/
 
 require 'vanish'
 require 'pathname'
@@ -118,7 +126,7 @@ class KeyRing
   end
 
   RawStrPat = /[0-9A-Za-z][!-~]*/ 
-  QuotedStrPat = /"((?:[!#-\[\]-~]|\\["\\]|\\x[0-9a-fA-F][0-9a-fA-F])*)"/
+  QuotedStrPat = /"((?:[ !#-\[\]-~]|\\["\\]|\\x[0-9a-fA-F][0-9a-fA-F])*)"/
   def self.decode_strings(str)
     s = str
     r = []
@@ -182,6 +190,7 @@ class KeyRing
                   ch2 = str[i+1]
                   raise "strings syntax error" if /\A[0-9a-fA-F]\z/n !~ ch2.chr
                   s << (ch1.chr.to_i(16) * 16 + ch2.chr.to_i(16)).chr
+                  i += 2
                 else
                   raise "strings syntax error"
                 end
@@ -191,8 +200,10 @@ class KeyRing
             else
               raise "strings syntax error"
             end
-          else
+          when ?\s, ?\!, ?\#..?\[, ?\]..?\~
             s << ch.chr
+          else
+            raise "strings syntax error"
           end
         end
         if i < len && !Spaces.include?(str[i])
