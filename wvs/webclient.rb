@@ -25,9 +25,11 @@ class WVS::WebClient
   end
 
   def initialize
-    @handler = []
-    @handler << WVS::Auth.method(:codeblog_handler)
-    @handler << WVS::Qwik.method(:qwik_auth_handler)
+    @auth_handler = []
+    @reqauth_checker = []
+    @auth_handler << WVS::Auth.method(:codeblog_handler)
+    @auth_handler << WVS::Qwik.method(:qwik_auth_handler)
+    @reqauth_checker << WVS::Qwik.method(:qwik_reqauth_checker)
 
     @cookies = {}
   end
@@ -79,9 +81,9 @@ class WVS::WebClient
 
     while true
       resp = do_request(uri, req)
-      break if resp.code == '200'
+      break if resp.code == '200' && @reqauth_checker.all? {|checker| !checker.call(self, uri, req, resp) }
       r = nil
-      @handler.each {|h|
+      @auth_handler.each {|h|
         if r = h.call(self, uri, req, resp)
           uri, req = r
           break

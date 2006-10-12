@@ -66,9 +66,15 @@ class WVS::Qwik < WVS::Repo
     qwik_typekey_auth_handler(webclient, uri, req, resp)
   end
 
+  def self.qwik_reqauth_checker(webclient, uri, req, resp)
+    %r{<a href=".login"\n>Login</a\n>} =~ resp.body
+  end
+
   def self.qwik_typekey_auth_handler(webclient, uri, req, resp)
-    unless resp.code == '500' &&
-           %r{<a href=".login"\n>Login</a\n>} =~ resp.body
+    unless %r{>powered by <a href="http://qwik.jp/"\n>qwikWeb</a} =~ resp.body
+      return nil
+    end
+    unless %r{<a href="\.login"\n>Login</a\n>} =~ resp.body
       return nil
     end
     qwik_login_uri = uri + ".login"
@@ -82,7 +88,9 @@ class WVS::Qwik < WVS::Repo
         end
       }
       return nil if !qwik_typekey_uri
-    elsif resp.code == '302' && resp['Location'] == "https://www.codeblog.org/.typekey"
+    elsif resp.code == '302' && %r{/\.typekey\z} =~ resp['Location']
+      # "https://www.codeblog.org/.typekey"
+      # "https://www.codeblog.org/wg-chairs/.typekey"
       qwik_typekey_uri = URI(resp['Location'])
     else
       return nil
