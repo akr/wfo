@@ -72,19 +72,35 @@ class WVS::Qwik < WVS::Repo
       return nil
     end
     qwik_login_uri = uri + ".login"
-    qwik_typekey_uri = nil
-    HTree(qwik_login_uri).traverse_element("{http://www.w3.org/1999/xhtml}a") {|e|
-      if e.extract_text.to_s == "Login by TypeKey"
-        qwik_typekey_uri = qwik_login_uri + e.get_attr('href')
-      end
-    }
-    return nil if !qwik_typekey_uri
+    req = Net::HTTP::Get.new(qwik_login_uri.request_uri)
+    resp = webclient.do_request(qwik_login_uri, req)
+    if resp.code == '200'
+      qwik_typekey_uri = nil
+      HTree(resp.body).traverse_element("{http://www.w3.org/1999/xhtml}a") {|e|
+        if e.extract_text.to_s == "Login by TypeKey"
+          qwik_typekey_uri = qwik_login_uri + e.get_attr('href')
+        end
+      }
+      return nil if !qwik_typekey_uri
+    elsif resp.code == '302' && resp['Location'] == "https://www.codeblog.org/.typekey"
+      qwik_typekey_uri = URI(resp['Location'])
+    else
+      return nil
+    end
+
     req = Net::HTTP::Get.new(qwik_typekey_uri.request_uri)
     resp = webclient.do_request(qwik_typekey_uri, req)
     return nil if resp.code != '302'
     typekey_uri = URI(resp['Location'])
 
     resp = WVS::Auth.typekey_login(webclient, typekey_uri)
+
+    if resp.code == '302' # codeblog
+      codeblog_uri = URI(resp['Location'])
+      req = Net::HTTP::Get.new(codeblog_uri.request_uri)
+      resp = webclient.do_request(codeblog_uri, req)
+    end
+
     return nil if resp.code != '200'
 
     req = Net::HTTP::Get.new(uri.request_uri)
