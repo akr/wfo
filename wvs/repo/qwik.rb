@@ -19,31 +19,6 @@ class WVS::Qwik < WVS::Repo
     self.new(form, edit_uri)
   end
 
-=begin
-  def self.checkout_if_possible(page)
-    if %r{>powered by <a href="http://qwik.jp/"\n>qwikWeb</a} =~ page
-      try_checkout(page)
-    else
-      nil
-    end
-  end
-
-  def self.try_checkout(page)
-    edit_url = URI(page.base_uri.to_s.sub(/\.html/, '.edit'))
-    self.checkout(edit_url)
-  end
-
-  def self.checkout(edit_url)
-    update_page_str = WVS::WebClient.read(edit_url)
-    update_page_tree = HTree(update_page_str)
-    if update_page_str.base_uri != edit_url
-      raise "qwikWeb edit page redirected"
-    end
-    form = find_textarea_form(update_page_tree, edit_url)
-    self.new(form, edit_url)
-  end
-=end
-
   def self.find_textarea_form(page, uri)
     page.traverse_element('{http://www.w3.org/1999/xhtml}form') {|form|
       form.traverse_element('{http://www.w3.org/1999/xhtml}textarea') {

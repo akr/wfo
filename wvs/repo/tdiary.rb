@@ -22,34 +22,6 @@ class WVS::TDiary < WVS::Repo
     self.new(form, stable_uri)
   end
 
-=begin
-  def self.checkout_if_possible(page)
-    if /<meta name="generator" content="tDiary/ =~ page
-      try_checkout(page)
-    else
-      nil
-    end
-  end
-
-  def self.try_checkout(page)
-    unless /<span class="adminmenu"><a href="(update.rb\?edit=true;year=\d+;month=\d+;day=\d+)">/ =~ page
-      raise "update link not found in tDiary page : #{page.base_uri}"
-    end
-    update_url = page.base_uri + $1
-    self.checkout(update_url)
-  end
-
-  def self.checkout(update_url)
-    update_page_str = WVS::WebClient.read(update_url)
-    update_page_tree = HTree(update_page_str)
-    if update_page_str.base_uri != update_url
-      raise "tDiary update page redirected"
-    end
-    form = find_replace_form(update_page_tree, update_url)
-    self.new(form, update_url)
-  end
-=end
-
   def self.find_replace_form(page, uri)
     page.traverse_element('{http://www.w3.org/1999/xhtml}form') {|form|
       form.traverse_element('{http://www.w3.org/1999/xhtml}input') {|input|
