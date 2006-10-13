@@ -8,7 +8,7 @@
 # gpg is used for the encryption.
 #
 # You needs your public and secret key for the encryption.
-# (Use "gpg --gen-key" if you don't have it yet.)
+# (Use "gpg --gen-key" if you don't have one yet.)
 #
 # == How to specify your authentication information in the keyring.
 #
@@ -45,7 +45,7 @@
 #   /[0-9A-Za-z][!-~]*/ 
 # * A string quoted by double quote "...".
 #   The string content may contain printable ASCII character including space
-#   and wescape sequences \\, \" and \xHH.
+#   and escape sequences \\, \" and \xHH.
 #   /"((?:[ !#-\[\]-~]|\\["\\]|\\x[0-9a-fA-F][0-9a-fA-F])*)"/
 
 require 'vanish'
