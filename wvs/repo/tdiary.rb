@@ -1,6 +1,28 @@
 require 'htree'
 
 class WVS::TDiary < WVS::Repo
+  def self.applicable?(page)
+    /<meta name="generator" content="tDiary/ =~ page
+  end
+
+  def self.find_stable_uri(page)
+    unless /<span class="adminmenu"><a href="(update.rb\?edit=true;year=\d+;month=\d+;day=\d+)">/ =~ page
+      raise "update link not found in tDiary page : #{page.base_uri}"
+    end
+    page.base_uri + $1
+  end
+
+  def self.make_accessor(stable_uri)
+    page_str = WVS::WebClient.read(stable_uri)
+    page_tree = HTree(page_str)
+    if page_str.base_uri != stable_uri
+      raise "tDiary update page redirected"
+    end
+    form = find_replace_form(page_tree, stable_uri)
+    self.new(form, stable_uri)
+  end
+
+=begin
   def self.checkout_if_possible(page)
     if /<meta name="generator" content="tDiary/ =~ page
       try_checkout(page)
@@ -26,6 +48,7 @@ class WVS::TDiary < WVS::Repo
     form = find_replace_form(update_page_tree, update_url)
     self.new(form, update_url)
   end
+=end
 
   def self.find_replace_form(page, uri)
     page.traverse_element('{http://www.w3.org/1999/xhtml}form') {|form|
@@ -68,6 +91,6 @@ class WVS::TDiary < WVS::Repo
   end
 
   def reload
-    self.class.checkout(@uri)
+    self.class.make_accessor(@uri)
   end
 end

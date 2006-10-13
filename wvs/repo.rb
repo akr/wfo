@@ -24,19 +24,26 @@ class WVS::Repo
     raise "repository class not found: #{type}"
   end
 
-  def self.make_accessor(url, type=nil)
+  def self.find_class_and_stable_uri(url, type=nil)
     page = WVS::WebClient.read(url)
     if type
       c = fetch_class(type)
-      return c.try_checkout(page)
+      stable_uri = c.find_stable_uri(page)
+      return c, stable_uri
     else
       @repo_classes.each {|c|
-        if ret = c.checkout_if_possible(page)
-          return ret 
+        if c.applicable?(page)
+          stable_uri = c.find_stable_uri(page)
+          return c, stable_uri
         end
       }
     end
     raise "unknown repository type : #{url}"
+  end
+
+  def self.make_accessor(url, type=nil)
+    c, stable_uri = find_class_and_stable_uri(url, type)
+    return c.make_accessor(stable_uri)
   end
 
 end

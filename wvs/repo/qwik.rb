@@ -1,6 +1,25 @@
 require 'htree'
 
 class WVS::Qwik < WVS::Repo
+  def self.applicable?(page)
+    %r{>powered by <a href="http://qwik.jp/"\n>qwikWeb</a} =~ page
+  end
+
+  def self.find_stable_uri(page)
+    URI(page.base_uri.to_s.sub(/\.html/, '.edit'))
+  end
+
+  def self.make_accessor(edit_uri)
+    page_str = WVS::WebClient.read(edit_uri)
+    page_tree = HTree(page_str)
+    if page_str.base_uri != edit_uri
+      raise "qwikWeb edit page redirected"
+    end
+    form = find_textarea_form(page_tree, edit_uri)
+    self.new(form, edit_uri)
+  end
+
+=begin
   def self.checkout_if_possible(page)
     if %r{>powered by <a href="http://qwik.jp/"\n>qwikWeb</a} =~ page
       try_checkout(page)
@@ -23,6 +42,7 @@ class WVS::Qwik < WVS::Repo
     form = find_textarea_form(update_page_tree, edit_url)
     self.new(form, edit_url)
   end
+=end
 
   def self.find_textarea_form(page, uri)
     page.traverse_element('{http://www.w3.org/1999/xhtml}form') {|form|
@@ -59,7 +79,7 @@ class WVS::Qwik < WVS::Repo
   end
 
   def reload
-    self.class.checkout(@uri)
+    self.class.make_accessor(@uri)
   end
 
   def self.qwik_auth_handler(webclient, uri, req, resp)

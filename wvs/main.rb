@@ -62,12 +62,13 @@ module WVS
       if local_filename && WorkArea.has?(local_filename)
         err "local file already exists : #{local_filename.inspect}"
       end
-      accessor = Repo.make_accessor(url, opt_t)
+      repo_class, stable_uri = Repo.find_class_and_stable_uri(url, opt_t)
+      accessor = repo_class.make_accessor(stable_uri)
 
       if !local_filename
         local_filename = make_local_filename(accessor.recommended_filename)
       end
-      workarea = WorkArea.new(local_filename, accessor.class.type, url, accessor.current_text)
+      workarea = WorkArea.new(local_filename, accessor.class.type, stable_uri, accessor.current_text)
       workarea.store
       puts local_filename
     }

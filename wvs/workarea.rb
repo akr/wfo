@@ -28,7 +28,7 @@ class WVS::WorkArea
   attr_reader :filename, :url
 
   def make_accessor
-    WVS::Repo.make_accessor(@info['URL'], @info['repository_type'])
+    WVS::Repo.fetch_class(@info['repository_type']).make_accessor(@info['URL'])
   end
 
   def store
