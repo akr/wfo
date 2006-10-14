@@ -1,6 +1,6 @@
 require 'htree'
 
-class WVS::Trac < WVS::Repo
+class WVS::TextArea < WVS::Repo
   def self.applicable?(page)
     %r{<textarea}i =~ page
   end
