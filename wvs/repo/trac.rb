@@ -53,7 +53,7 @@ class WVS::Trac < WVS::Repo
   end
 
   def recommended_filename
-    @form.action_uri.to_s.sub(%r{\A.*/}, '').sub(/\.save\z/, '')
+    @form.action_uri.to_s.sub(%r{\A.*/}, '')
   end
 
   def reload
