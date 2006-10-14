@@ -68,9 +68,13 @@ module WVS
       if !local_filename_arg
         extname = '.txt'
       elsif /^\./ =~ local_filename_arg
-        extname = local_filename
+        extname = local_filename_arg
       else
-        local_filename = local_filename_arg
+        if /\./ =~ local_filename_arg
+          local_filename = local_filename_arg
+        else
+          local_filename = local_filename_arg + '.txt'
+        end
         if WorkArea.has?(local_filename)
           err "local file already exists : #{local_filename.inspect}"
         end
