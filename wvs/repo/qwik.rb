@@ -21,10 +21,7 @@ class WVS::Qwik < WVS::Repo
 
   def self.find_textarea_form(page, base_uri, referer_uri)
     page.traverse_html_form {|form|
-      textarea_name = nil
-      if form.has_textarea? {|name, value| textarea_name = name }
-        return form, textarea_name
-      end
+      form.each_textarea {|name, value| return form, name }
     }
     raise "textarea not found in #{uri}"
   end

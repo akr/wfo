@@ -18,29 +18,31 @@ class WVS::TDiary < WVS::Repo
     if page_str.last_request_uri != stable_uri
       raise "tDiary update page redirected"
     end
-    form = find_replace_form(page_tree)
-    self.new(form, stable_uri)
+    form, textarea_name = find_replace_form(page_tree)
+    self.new(form, stable_uri, textarea_name)
   end
 
   def self.find_replace_form(page)
     page.traverse_html_form {|form|
-      return form if form.has?('replace') && form.input_type('replace') == :submit_button
+      next unless form.has?('replace') && form.input_type('replace') == :submit_button
+      form.each_textarea {|name, value| return form, name }
     }
     raise "replace form not found in #{page.request_uri}"
   end
 
-  def initialize(form, uri)
+  def initialize(form, uri, textarea_name)
     @form = form
     @uri = uri
+    @textarea_name = textarea_name
   end
-  attr_reader :form
+  attr_reader :form, :textarea_name
 
   def current_text
-    @form.fetch('body').dup
+    @form.fetch(@textarea_name).dup
   end
 
   def replace_text(text)
-    @form.set('body', text)
+    @form.set(@textarea_name, text)
   end
 
   def commit

@@ -17,10 +17,8 @@ class WVS::TextArea < WVS::Repo
   end
 
   def self.find_textarea_form(page, base_uri, referer_uri)
-    page.traverse_element('{http://www.w3.org/1999/xhtml}form') {|form|
-      form.traverse_element('{http://www.w3.org/1999/xhtml}textarea') {|textarea|
-        return WVS::Form.make(form, base_uri, referer_uri), textarea.get_attr('name')
-      }
+    page.traverse_html_form {|form|
+      form.each_textarea {|name, value| return form, name } 
     }
     raise "textarea not found in #{uri}"
   end

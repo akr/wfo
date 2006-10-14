@@ -22,10 +22,8 @@ class WVS::Trac < WVS::Repo
   end
 
   def self.find_textarea_form(page, base_uri, referer_uri)
-    page.traverse_element('{http://www.w3.org/1999/xhtml}form') {|form|
-      form.traverse_element('{http://www.w3.org/1999/xhtml}textarea') {|textarea|
-        return WVS::Form.make(form, base_uri, referer_uri), textarea.get_attr('name')
-      }
+    page.traverse_html_form {|form|
+      form.each_textarea {|name, value| return form, name }
     }
     raise "textarea not found in #{uri}"
   end
@@ -35,7 +33,7 @@ class WVS::Trac < WVS::Repo
     @uri = uri
     @textarea_name = textarea_name
   end
-  attr_reader :form
+  attr_reader :form, :textarea_name
 
   def current_text
     @form.fetch(@textarea_name).dup

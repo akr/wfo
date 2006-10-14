@@ -139,19 +139,12 @@ class WVS::Form
     !!c
   end
 
-  def has_textarea?
+  def each_textarea
     @controls.each {|name, value, type|
       if type == :textarea
-        if block_given?
-          if yield name, value
-            return true
-          end
-        else
-          return true
-        end
+        yield name, value
       end
     }
-    return false
   end
 
   def make_request(submit_name=nil)
