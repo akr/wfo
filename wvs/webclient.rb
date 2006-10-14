@@ -72,7 +72,7 @@ class WVS::WebClient
   def do_redirect_requests(uri, req)
     results = []
     while true
-      resp = do_request_cookie(uri, req)
+      resp = do_request_state(uri, req)
       results << [uri, req, resp]
       if /\A(?:301|302|303|307)\z/ =~ resp.code && resp['location']
         # RFC 1945 - Hypertext Transfer Protocol -- HTTP/1.0
@@ -100,7 +100,7 @@ class WVS::WebClient
     results
   end
 
-  def do_request_cookie(uri, req)
+  def do_request_state(uri, req)
     make_request_basic_authenticated(uri, req)
     insert_cookie_header(uri, req)
     resp = do_request_simple(uri, req)

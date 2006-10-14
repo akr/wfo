@@ -75,7 +75,7 @@ def (WVS::Auth).qwik_auth_handler_typekey(webclient, uri, req, resp)
   end
   qwik_login_uri = uri + ".login"
   req = Net::HTTP::Get.new(qwik_login_uri.request_uri)
-  resp = webclient.do_request_cookie(qwik_login_uri, req)
+  resp = webclient.do_request_state(qwik_login_uri, req)
   if resp.code == '200'
     qwik_typekey_uri = nil
     HTree(resp.body).traverse_element("{http://www.w3.org/1999/xhtml}a") {|e|
@@ -93,7 +93,7 @@ def (WVS::Auth).qwik_auth_handler_typekey(webclient, uri, req, resp)
   end
 
   req = Net::HTTP::Get.new(qwik_typekey_uri.request_uri)
-  resp = webclient.do_request_cookie(qwik_typekey_uri, req)
+  resp = webclient.do_request_state(qwik_typekey_uri, req)
   return nil if resp.code != '302'
   typekey_uri = URI(resp['Location'])
 
@@ -102,7 +102,7 @@ def (WVS::Auth).qwik_auth_handler_typekey(webclient, uri, req, resp)
   if resp.code == '302' # codeblog
     codeblog_uri = URI(resp['Location'])
     req = Net::HTTP::Get.new(codeblog_uri.request_uri)
-    resp = webclient.do_request_cookie(codeblog_uri, req)
+    resp = webclient.do_request_state(codeblog_uri, req)
   end
 
   return nil if resp.code != '200'
