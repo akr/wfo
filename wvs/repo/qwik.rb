@@ -15,31 +15,32 @@ class WVS::Qwik < WVS::Repo
     if page_str.last_request_uri != edit_uri
       raise "qwikWeb edit page redirected"
     end
-    form = find_textarea_form(page_tree, page_tree.base_uri, page_str.last_request_uri)
-    self.new(form, edit_uri)
+    form, textarea_name = find_textarea_form(page_tree, page_tree.base_uri, page_str.last_request_uri)
+    self.new(form, edit_uri, textarea_name)
   end
 
   def self.find_textarea_form(page, base_uri, referer_uri)
     page.traverse_element('{http://www.w3.org/1999/xhtml}form') {|form|
-      form.traverse_element('{http://www.w3.org/1999/xhtml}textarea') {
-        return WVS::Form.make(form, base_uri, referer_uri)
+      form.traverse_element('{http://www.w3.org/1999/xhtml}textarea') {|textarea|
+        return WVS::Form.make(form, base_uri, referer_uri), textarea.get_attr('name')
       }
     }
     raise "textarea not found in #{uri}"
   end
 
-  def initialize(form, uri)
+  def initialize(form, uri, textarea_name)
     @form = form
     @uri = uri
+    @textarea_name = textarea_name
   end
-  attr_reader :form
+  attr_reader :form, :textarea_name
 
   def current_text
-    @form.fetch('contents').dup
+    @form.fetch(@textarea_name).dup
   end
 
   def replace_text(text)
-    @form.set('contents', text)
+    @form.set(@textarea_name, text)
   end
 
   def commit
