@@ -3,7 +3,7 @@ require 'escape'
 require 'net/https'
 
 class WVS::Form
-  def self.make(base_uri, form_tree, referer_uri=nil)
+  def self.make(form_tree, base_uri, referer_uri=nil)
     action_uri = base_uri + form_tree.get_attr('action')
     method = form_tree.get_attr('method')
     enctype = form_tree.get_attr('enctype')

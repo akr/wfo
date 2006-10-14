@@ -62,7 +62,7 @@ end
 def (WVS::Auth).typekey_login(webclient, typekey_uri)
   typekey_login_form = nil
   HTree(typekey_uri).traverse_element('{http://www.w3.org/1999/xhtml}form') {|form|
-    form = WVS::Form.make(typekey_uri, form)
+    form = WVS::Form.make(form, typekey_uri)
     if form.has?('username') && form.has?('password')
       typekey_login_form = form
       break
@@ -83,7 +83,7 @@ def (WVS::Auth).typekey_login(webclient, typekey_uri)
   if resp.code == '200' # send email address or not?
     email_form = nil
     HTree(resp.body).traverse_element('{http://www.w3.org/1999/xhtml}form') {|form|
-      email_form = WVS::Form.make(typekey_login_form.action_uri, form)
+      email_form = WVS::Form.make(form, typekey_login_form.action_uri)
       break
     }
     req = email_form.make_request
