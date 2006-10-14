@@ -64,15 +64,22 @@ module WVS
     opt.parse!(argv)
     WebClient.do {
       url = URI(argv.shift)
-      local_filename = argv.shift
-      if local_filename && WorkArea.has?(local_filename)
-        err "local file already exists : #{local_filename.inspect}"
+      local_filename_arg = argv.shift
+      if !local_filename_arg
+        extname = '.txt'
+      elsif /^\./ =~ local_filename_arg
+        extname = local_filename
+      else
+        local_filename = local_filename_arg
+        if WorkArea.has?(local_filename)
+          err "local file already exists : #{local_filename.inspect}"
+        end
       end
       repo_class, stable_uri = Repo.find_class_and_stable_uri(url, opt_t)
       accessor = repo_class.make_accessor(stable_uri)
 
       if !local_filename
-        local_filename = make_local_filename(accessor.recommended_filename)
+        local_filename = make_local_filename(accessor.recommended_filename, extname)
       end
       workarea = WorkArea.new(local_filename, accessor.class.type, stable_uri, accessor.current_text)
       workarea.store
@@ -80,19 +87,20 @@ module WVS
     }
   end
 
-  def make_local_filename(recommended_filename)
-    if %r{/} =~ recommended_filename ||
-      recommended_filename = File.basename(recommended_filename)
+  def make_local_filename(recommended_basename, extname)
+    if %r{/} =~ recommended_basename ||
+      recommended_basename = File.basename(recommended_basename)
     end
-    if recommended_filename.empty?
-      recommended_filename = "empty-filename"
+    if recommended_basename.empty?
+      recommended_basename = "empty-filename"
     end
-    if !WorkArea.has?(recommended_filename)
-      local_filename = recommended_filename
+    tmp = "#{recommended_basename}#{extname}"
+    if !WorkArea.has?(tmp)
+      local_filename = tmp
     else
       n = 1
       begin
-        tmp = "#{recommended_filename}_#{n}"
+        tmp = "#{recommended_basename}_#{n}#{extname}"
         n += 1
       end while WorkArea.has?(tmp)
       local_filename = tmp
