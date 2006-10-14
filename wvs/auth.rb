@@ -21,7 +21,6 @@ class << WVS::Auth
   end
 end
 
-
 def (WVS::Auth).codeblog_auth_handler(webclient, uri, req, resp)
   unless resp.code == '403' &&
          uri.scheme == 'https' &&
@@ -97,4 +96,40 @@ def (WVS::Auth).typekey_login(webclient, typekey_uri)
   req = Net::HTTP::Get.new(return_uri.request_uri)
   resp = webclient.do_request_cookie(return_uri, req)
   resp
+end
+
+module WVS
+  def Auth.http_basic_auth_handler(webclient, uri, req, resp)
+    unless resp.code == '401' &&
+           resp['www-authenticate'] &&
+           resp['www-authenticate'] =~ /\A\s*#{Pat::HTTP_Challenge}s*\z/n
+      return nil
+    end
+    auth_scheme = $1
+    rest = $2
+    params = []
+    while /\A#{Pat::HTTP_AuthParam}(?:(?:\s*,\s*)|\s*\z)/ =~ rest
+      rest = $'
+      k = $1
+      v = $3 ? $3.gsub(/\\([\000-\377])/) { $1 } : $2
+      params << [k, v]
+    end
+    return nil if /\Abasic\z/i !~ auth_scheme
+    return nil if params.length != 1
+    k, v = params[0]
+    return nil if /\Arealm\z/i !~ k
+    realm = v
+    protection_domain = KeyRing.http_protection_domain(uri, realm)
+    canonical_root_url = protection_domain[0]
+    KeyRing.with_authinfo(KeyRing.http_protection_domain(uri, realm)) {|username, password|
+      user_pass = "#{username}:#{password}"
+      credential = [user_pass].pack("m")
+      user_pass.vanish!
+      credential.gsub!(/\s+/, '')
+      path_pat = /\A#{uri.path.sub(%r{[^/]*\z}, '')}/
+      webclient.add_basic_credential(canonical_root_url, realm, path_pat, credential)
+    }
+    webclient.make_request_basic_authenticated(uri, req)
+    return uri, req
+  end
 end

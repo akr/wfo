@@ -16,6 +16,7 @@ module WVS
 end
 
 require 'wvs/missing'
+require 'wvs/pat'
 
 require 'wvs/workarea'
 require 'wvs/webclient'
@@ -23,6 +24,7 @@ require 'wvs/webclient'
 require 'wvs/repo'
 require 'wvs/repo/tdiary'
 require 'wvs/repo/qwik'
+require 'wvs/repo/trac'
 
 module WVS
   module_function

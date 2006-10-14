@@ -47,6 +47,14 @@
 #   The string content may contain printable ASCII character including space
 #   and escape sequences \\, \" and \xHH.
 #   /"((?:[ !#-\[\]-~]|\\["\\]|\\x[0-9a-fA-F][0-9a-fA-F])*)"/
+#
+# == Comment and encrypted content format
+#
+# * TypeKey
+#   % (echo typekey-username typekey-password) | gpg --comment TypeKey -e -a --default-recipient-self > typekey.asc
+#
+# * HTTP Basic Authentication
+#   % (echo username password) | gpg --comment 'canonical-root-url "realm"' -e -a --default-recipient-self > service.asc
 
 require 'vanish'
 require 'pathname'

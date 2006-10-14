@@ -45,7 +45,14 @@ class WVS::Form
         raise "unexpected control : #{control.name}"
       when '{http://www.w3.org/1999/xhtml}select'
         next if control.get_attr('disabled')
-        raise "unexpected control : #{control.name}"
+        multiple = control.get_attr('multiple') ? :multiple : nil
+        options = []
+        control.traverse_element('{http://www.w3.org/1999/xhtml}option') {|option|
+          next if option.get_attr('disabled')
+          selected = option.get_attr('selected') ? :selected : nil
+          options << [selected, option.get_attr('value')]
+        }
+        form.add_select(name, multiple, options)
       when '{http://www.w3.org/1999/xhtml}textarea'
         next if control.get_attr('disabled')
         form.add_textarea(name, control.extract_text.to_s)
@@ -93,6 +100,10 @@ class WVS::Form
 
   def add_file(name)
     @controls << [name, nil, :file]
+  end
+
+  def add_select(name, multiple, options)
+    @controls << [name, options, :select, multiple]
   end
 
   def add_textarea(name, value)
@@ -188,6 +199,10 @@ class WVS::Form
         successful << [name, value] if checked
       when :text, :textarea, :password, :hidden
         successful << [name, value]
+      when :select
+        selected_options = []
+        value.each {|selected, option| selected_options << option if selected }
+        selected_options.each {|option| successful << [name, option] }
       else
         raise "unexpected control type: #{type}"
       end
