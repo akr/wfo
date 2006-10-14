@@ -35,6 +35,7 @@ class WVS::Trac < WVS::Repo
     @uri = uri
     @textarea_name = textarea_name
   end
+  attr_reader :form
 
   def current_text
     @form.fetch(@textarea_name).dup

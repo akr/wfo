@@ -32,6 +32,7 @@ class WVS::Qwik < WVS::Repo
     @form = form
     @uri = uri
   end
+  attr_reader :form
 
   def current_text
     @form.fetch('contents').dup

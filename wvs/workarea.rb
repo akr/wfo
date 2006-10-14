@@ -7,7 +7,7 @@ class WVS::WorkArea
     info_path.exist?
   end
 
-  def initialize(filename, repository_type=nil, url=nil, original_text=nil)
+  def initialize(filename, repository_type=nil, url=nil, original_text=nil, form=nil)
     @filename = Pathname.new(filename)
     @info_path = @filename.dirname + '.wvs' + "i_#{@filename.basename}.gz"
     if url
@@ -17,6 +17,7 @@ class WVS::WorkArea
       @info['URL'] = @url
       @info['repository_type'] = repository_type.dup
       @info['original_text'] = original_text.dup
+      @info['form'] = form
     else
       raise "not exists : #{@info_path}" if !@info_path.exist?
       Zlib::GzipReader.open(@info_path) {|f|

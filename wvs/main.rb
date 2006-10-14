@@ -85,7 +85,7 @@ module WVS
       if !local_filename
         local_filename = make_local_filename(accessor.recommended_filename, extname)
       end
-      workarea = WorkArea.new(local_filename, accessor.class.type, stable_uri, accessor.current_text)
+      workarea = WorkArea.new(local_filename, accessor.class.type, stable_uri, accessor.current_text, accessor.form)
       workarea.store
       puts local_filename
     }
