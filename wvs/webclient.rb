@@ -50,15 +50,16 @@ class WVS::WebClient
   end
 
   def do_request(uri, req)
-    do_request_redirect(uri, req)
+    results = do_redirect_requests(uri, req)
+    results.last.last
   end
 
-  def do_request_redirect(uri, req)
+  def do_redirect_requests(uri, req)
+    results = []
     while true
       resp = do_request_cookie(uri, req)
+      results << [uri, req, resp]
       if /\A(?:301|302|303|307)\z/ =~ resp.code && resp['location']
-        p resp
-        p resp.body
         # RFC 1945 - Hypertext Transfer Protocol -- HTTP/1.0
         #  301 Moved Permanently
         #  302 Moved Temporarily
@@ -77,13 +78,11 @@ class WVS::WebClient
         redirect = uri + redirect if redirect.relative?
         req = Net::HTTP::Get.new(redirect.request_uri)
         uri = redirect
-        p req
-        p uri
       else
         break
       end
     end
-    resp
+    results
   end
 
   def do_request_cookie(uri, req)
