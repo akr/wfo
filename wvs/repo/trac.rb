@@ -15,7 +15,7 @@ class WVS::Trac < WVS::Repo
     page_str = WVS::WebClient.read(edit_uri)
     page_tree = HTree(page_str)
     if page_str.last_request_uri != edit_uri
-      raise "qwikWeb edit page redirected"
+      raise "Trac edit page redirected"
     end
     form, textarea_name = find_textarea_form(page_tree, page_tree.base_uri, page_str.last_request_uri)
     self.new(form, edit_uri, textarea_name)
