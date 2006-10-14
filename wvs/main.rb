@@ -81,11 +81,11 @@ module WVS
   end
 
   def make_local_filename(recommended_filename)
-    if %r{/} =~ recommended_filename
-      raise "recommended_filename contains a slash : #{recommended_filename}"
+    if %r{/} =~ recommended_filename ||
+      recommended_filename = File.basename(recommended_filename)
     end
     if recommended_filename.empty?
-      raise "recommended_filename is empty"
+      recommended_filename = "empty-filename"
     end
     if !WorkArea.has?(recommended_filename)
       local_filename = recommended_filename
