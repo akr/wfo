@@ -28,7 +28,7 @@ class WVS::TextArea < WVS::Repo
     @uri = uri
     @textarea_name = textarea_name
   end
-  attr_reader :form
+  attr_reader :form, :textarea_name
 
   def current_text
     @form.fetch(@textarea_name).dup
