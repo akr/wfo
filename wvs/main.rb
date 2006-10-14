@@ -1,5 +1,5 @@
 # usage:
-#   wvs checkout [-t repo_type] URL [local-filename]
+#   wvs checkout [-t repo_type] URL [local-filename][.ext]
 #   wvs status [-u] [local-filename...]
 #   wvs update [local-filename...]
 #   wvs commit [local-filename...]
