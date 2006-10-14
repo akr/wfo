@@ -17,7 +17,7 @@
 #
 # % mkdir ~/.keyring
 # % cd ~/.keyring
-# % (echo typekey-username typekey-password) | gpg --comment TypeKey -e -a --default-recipient-self > typekey.asc
+# % echo typekey-username typekey-password | gpg --comment TypeKey -e -a --default-recipient-self > typekey.asc
 #
 # It creates a file ~/.keyring/typekey.asc as follows.
 #
@@ -51,10 +51,10 @@
 # == Comment and encrypted content format
 #
 # * TypeKey
-#   % (echo typekey-username typekey-password) | gpg --comment TypeKey -e -a --default-recipient-self > typekey.asc
+#   % echo typekey-username typekey-password | gpg --comment TypeKey -e -a --default-recipient-self > typekey.asc
 #
 # * HTTP Basic Authentication
-#   % (echo username password) | gpg --comment 'canonical-root-url "realm"' -e -a --default-recipient-self > service.asc
+#   % echo username password | gpg --comment 'canonical-root-url "realm"' -e -a --default-recipient-self > service.asc
 
 require 'vanish'
 require 'pathname'
