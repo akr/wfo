@@ -24,8 +24,6 @@ class WVS::WorkArea
       @info = {}
       @info['URL'] = @url
       @info['repository_type'] = repository_type.dup
-      original_text = form.fetch(textarea_name).dup
-      @info['original_text'] = original_text.dup
       @info['form'] = form
       @info['textarea_name'] = textarea_name
     else
@@ -61,11 +59,11 @@ class WVS::WorkArea
   end
 
   def original_text
-    @info['original_text']
+    @info['form'].fetch(@info['textarea_name'])
   end
 
   def original_text=(text)
-    @info['original_text'] = text
+    @info['form'].set(@info['textarea_name'], text)
   end
 
   def local_text
