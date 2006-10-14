@@ -3,11 +3,11 @@ require 'escape'
 require 'net/https'
 
 class WVS::Form
-  def self.make(base_uri, form_tree)
+  def self.make(base_uri, form_tree, referer_uri=nil)
     action_uri = base_uri + form_tree.get_attr('action')
     method = form_tree.get_attr('method')
     enctype = form_tree.get_attr('enctype')
-    form = self.new(action_uri, method, enctype)
+    form = self.new(action_uri, method, enctype, referer_uri)
     form_tree.traverse_element(
       '{http://www.w3.org/1999/xhtml}input',
       '{http://www.w3.org/1999/xhtml}button',
@@ -35,13 +35,17 @@ class WVS::Form
         when 'radio'
           checked = control.get_attr('checked') ? :checked : nil
           form.add_radio(name, control.get_attr('value').to_s, checked)
+        when 'file'
+          form.add_file(name)
         else
           raise "unexpected input type : #{type}"
         end
       when '{http://www.w3.org/1999/xhtml}button'
         next if control.get_attr('disabled')
+        raise "unexpected control : #{control.name}"
       when '{http://www.w3.org/1999/xhtml}select'
         next if control.get_attr('disabled')
+        raise "unexpected control : #{control.name}"
       when '{http://www.w3.org/1999/xhtml}textarea'
         next if control.get_attr('disabled')
         form.add_textarea(name, control.extract_text.to_s)
@@ -52,15 +56,16 @@ class WVS::Form
     form
   end
 
-  def initialize(action_uri, method=nil, enctype=nil)
+  def initialize(action_uri, method=nil, enctype=nil, referer_uri=nil)
     @action_uri = action_uri
     method ||= 'get'
     @method = method.downcase
     enctype ||= 'application/x-www-form-urlencoded'
     @enctype = enctype.downcase
     @controls = []
+    @referer_uri = referer_uri
   end
-  attr_reader :action_uri
+  attr_reader :action_uri, :referer_uri
 
   def add_text(name, value)
     @controls << [name, value, :text]
@@ -86,6 +91,10 @@ class WVS::Form
     @controls << [name, value, :radio, checked]
   end
 
+  def add_file(name)
+    @controls << [name, nil, :file]
+  end
+
   def add_textarea(name, value)
     @controls << [name, value, :textarea]
   end
@@ -100,6 +109,12 @@ class WVS::Form
     c = @controls.assoc(name)
     raise IndexError, "no control : #{name}" if !c
     return c[1]
+  end
+
+  def input_type(name)
+    c = @controls.assoc(name)
+    raise IndexError, "no control : #{name}" if !c
+    return c[2]
   end
 
   def get(name)
@@ -141,6 +156,9 @@ class WVS::Form
       end
     else
       raise "unexpected method: #{@method}"
+    end
+    if @referer_uri
+      req['Referer'] = @referer_uri.to_s
     end
     if block_given?
       begin

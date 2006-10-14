@@ -12,17 +12,17 @@ class WVS::Qwik < WVS::Repo
   def self.make_accessor(edit_uri)
     page_str = WVS::WebClient.read(edit_uri)
     page_tree = HTree(page_str)
-    if page_str.base_uri != edit_uri
+    if page_str.last_request_uri != edit_uri
       raise "qwikWeb edit page redirected"
     end
-    form = find_textarea_form(page_tree, edit_uri)
+    form = find_textarea_form(page_tree, page_tree.base_uri, page_str.last_request_uri)
     self.new(form, edit_uri)
   end
 
-  def self.find_textarea_form(page, uri)
+  def self.find_textarea_form(page, base_uri, referer_uri)
     page.traverse_element('{http://www.w3.org/1999/xhtml}form') {|form|
       form.traverse_element('{http://www.w3.org/1999/xhtml}textarea') {
-        return WVS::Form.make(uri, form)
+        return WVS::Form.make(base_uri, form, referer_uri)
       }
     }
     raise "textarea not found in #{uri}"
@@ -74,7 +74,7 @@ class WVS::Qwik < WVS::Repo
     end
     qwik_login_uri = uri + ".login"
     req = Net::HTTP::Get.new(qwik_login_uri.request_uri)
-    resp = webclient.do_request(qwik_login_uri, req)
+    resp = webclient.do_request_cookie(qwik_login_uri, req)
     if resp.code == '200'
       qwik_typekey_uri = nil
       HTree(resp.body).traverse_element("{http://www.w3.org/1999/xhtml}a") {|e|
@@ -92,7 +92,7 @@ class WVS::Qwik < WVS::Repo
     end
 
     req = Net::HTTP::Get.new(qwik_typekey_uri.request_uri)
-    resp = webclient.do_request(qwik_typekey_uri, req)
+    resp = webclient.do_request_cookie(qwik_typekey_uri, req)
     return nil if resp.code != '302'
     typekey_uri = URI(resp['Location'])
 
@@ -101,7 +101,7 @@ class WVS::Qwik < WVS::Repo
     if resp.code == '302' # codeblog
       codeblog_uri = URI(resp['Location'])
       req = Net::HTTP::Get.new(codeblog_uri.request_uri)
-      resp = webclient.do_request(codeblog_uri, req)
+      resp = webclient.do_request_cookie(codeblog_uri, req)
     end
 
     return nil if resp.code != '200'

@@ -50,7 +50,50 @@ class WVS::WebClient
   end
 
   def do_request(uri, req)
+    do_request_redirect(uri, req)
+  end
+
+  def do_request_redirect(uri, req)
+    while true
+      resp = do_request_cookie(uri, req)
+      if /\A(?:301|302|303|307)\z/ =~ resp.code && resp['location']
+        p resp
+        p resp.body
+        # RFC 1945 - Hypertext Transfer Protocol -- HTTP/1.0
+        #  301 Moved Permanently
+        #  302 Moved Temporarily
+        # RFC 2068 - Hypertext Transfer Protocol -- HTTP/1.1
+        #  301 Moved Permanently
+        #  302 Moved Temporarily
+        #  303 See Other
+        # RFC 2616 - Hypertext Transfer Protocol -- HTTP/1.1
+        #  301 Moved Permanently
+        #  302 Found
+        #  303 See Other
+        #  307 Temporary Redirect
+        redirect = URI(resp['location'])
+        # Although it violates RFC2616, Location: field may have relative
+        # URI.  It is converted to absolute URI using uri as a base URI.
+        redirect = uri + redirect if redirect.relative?
+        req = Net::HTTP::Get.new(redirect.request_uri)
+        uri = redirect
+        p req
+        p uri
+      else
+        break
+      end
+    end
+    resp
+  end
+
+  def do_request_cookie(uri, req)
     insert_cookie_header(uri, req)
+    resp = do_request_simple(uri, req)
+    update_cookies(uri, resp['Set-Cookie']) if resp['Set-Cookie']
+    resp
+  end
+
+  def do_request_simple(uri, req)
     h = Net::HTTP.new(uri.host, uri.port)
     if uri.scheme == 'https'
       h.use_ssl = true
@@ -69,9 +112,7 @@ class WVS::WebClient
         end
         sock.post_connection_check(uri.host)
       end
-      resp = h.request req
-      update_cookies(uri, resp['Set-Cookie']) if resp['Set-Cookie']
-      resp
+      h.request req
     }
   end
 

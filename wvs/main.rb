@@ -15,6 +15,8 @@ require 'tempfile'
 module WVS
 end
 
+require 'wvs/missing'
+
 require 'wvs/workarea'
 require 'wvs/webclient'
 
