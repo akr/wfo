@@ -26,6 +26,8 @@ require 'wvs/repo/tdiary'
 require 'wvs/repo/qwik'
 require 'wvs/repo/trac'
 
+require 'wvs/repo/textarea'
+
 module WVS
   module_function
 
