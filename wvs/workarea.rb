@@ -7,6 +7,14 @@ class WVS::WorkArea
     info_path.exist?
   end
 
+  def self.each_filename(dir=Pathname.new('.'))
+    (dir + '.wvs').each_entry {|n|
+      if /\Ai_(.*)\.gz\z/ =~ n.basename.to_s
+        yield dir + $1
+      end
+    }
+  end
+
   def initialize(filename, repository_type=nil, url=nil, original_text=nil, form=nil)
     @filename = Pathname.new(filename)
     @info_path = @filename.dirname + '.wvs' + "i_#{@filename.basename}.gz"
@@ -76,11 +84,4 @@ class WVS::WorkArea
     self.original_text != self.local_text
   end
 
-  def self.each_filename(dir=Pathname.new('.'))
-    (dir + '.wvs').each_entry {|n|
-      if /\Ai_(.*)\.gz\z/ =~ n.basename.to_s
-        yield dir + $1
-      end
-    }
-  end
 end
