@@ -2,6 +2,9 @@ require 'vanish'
 require 'escape'
 require 'net/https'
 
+module WVS
+end
+
 class WVS::Form
   def self.make(form_tree, base_uri, referer_uri=nil)
     action_uri = base_uri + form_tree.get_attr('action')
