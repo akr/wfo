@@ -135,6 +135,14 @@ class String
     Mconv.conv(self, charset, Mconv.internal_mime_charset)
   end
 
+  def decode_charset_exc(charset)
+    Iconv.conv(Mconv.internal_mime_charset, charset, self)
+  end
+
+  def encode_charset_exc(charset)
+    Iconv.conv(charset, Mconv.internal_mime_charset, self)
+  end
+
   def guess_charset
     Mconv.guess_charset(self)
   end

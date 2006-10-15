@@ -10,7 +10,8 @@ class WVS::Form
     action_uri = base_uri + form_tree.get_attr('action')
     method = form_tree.get_attr('method')
     enctype = form_tree.get_attr('enctype')
-    form = self.new(action_uri, method, enctype, referer_uri, orig_charset)
+    accept_charset = form_tree.get_attr('accept-charset')
+    form = self.new(action_uri, method, enctype, accept_charset, referer_uri, orig_charset)
     form_tree.traverse_element(
       '{http://www.w3.org/1999/xhtml}input',
       '{http://www.w3.org/1999/xhtml}button',
@@ -66,15 +67,25 @@ class WVS::Form
     form
   end
 
-  def initialize(action_uri, method=nil, enctype=nil, referer_uri=nil, orig_charset=nil)
+  def initialize(action_uri, method=nil, enctype=nil, accept_charset=nil, referer_uri=nil, orig_charset=nil)
     @action_uri = action_uri
     method ||= 'get'
     @method = method.downcase
     enctype ||= 'application/x-www-form-urlencoded'
     @enctype = enctype.downcase
+    if accept_charset
+      @accept_charset = accept_charset.downcase.split(/\s+/)
+    else
+      if orig_charset
+        @accept_charset = [orig_charset]
+      else
+        @accept_charset = []
+      end
+    end
+    @accept_charset.map! {|charset| charset.downcase }
+    @accept_charset << 'utf-8' if !@accept_charset.include?('utf-8')
     @controls = []
     @referer_uri = referer_uri
-    @orig_charset = orig_charset
   end
   attr_reader :action_uri, :referer_uri
 
@@ -219,11 +230,19 @@ class WVS::Form
         raise "unexpected control type: #{type}"
       end
     }
-    if @orig_charset
-      successful.map! {|name, value|
-        [name.encode_charset(@orig_charset), value.encode_charset(@orig_charset)]
+    accept_charset = @accept_charset.dup
+    charset = accept_charset.shift
+    begin
+      encoded_successful = successful.map! {|name, value|
+        [name.encode_charset_exc(charset), value.encode_charset_exc(charset)]
       }
+    rescue Iconv::Failure
+      if charset = accept_charset.shift
+        retry
+      else
+        encoded_successful = successful
+      end
     end
-    Escape.html_form(successful)
+    Escape.html_form(encoded_successful)
   end
 end
