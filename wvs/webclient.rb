@@ -3,6 +3,7 @@ require 'wvs/form'
 require 'wvs/cookie'
 require 'wvs/auth'
 require 'keyring'
+require 'mconv'
 
 class WVS::WebClient
   def self.do
@@ -18,6 +19,10 @@ class WVS::WebClient
 
   def self.read(uri, opts={})
     Thread.current[:webclient].read(uri, opts)
+  end
+
+  def self.read_decode(uri, opts={})
+    Thread.current[:webclient].read_decode(uri, opts)
   end
 
   def self.do_request(uri, req)
@@ -159,6 +164,20 @@ class WVS::WebClient
     result.base_uri = uri
     resp.each {|name,value| result.meta_add_field name, value }
     result
+  end
+
+  def read_decode(uri, header={})
+    page_str = self.read(uri, header)
+    unless charset = page_str.charset
+      charset = page_str.guess_charset
+    end
+    result = page_str.decode_charset(charset)
+    round_trip = result.encode_charset(charset)
+    if page_str != round_trip
+      raise "cannot decode in round trip manner: #{uri}"
+    end
+    OpenURI::Meta.init result, page_str
+    return result, charset
   end
 
   def self.successful_controls(form, submit_name=nil)

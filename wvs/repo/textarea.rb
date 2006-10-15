@@ -10,14 +10,14 @@ class WVS::TextArea < WVS::Repo
   end
 
   def self.make_accessor(uri)
-    page_str = WVS::WebClient.read(uri)
+    page_str, orig_charset = WVS::WebClient.read_decode(uri)
     page_tree = HTree(page_str)
-    form, textarea_name = find_textarea_form(page_tree, page_tree.base_uri, page_str.last_request_uri)
+    form, textarea_name = find_textarea_form(page_tree, page_tree.base_uri, page_str.last_request_uri, orig_charset)
     self.new(form, uri, textarea_name)
   end
 
-  def self.find_textarea_form(page, base_uri, referer_uri)
-    page.traverse_html_form {|form|
+  def self.find_textarea_form(page, base_uri, referer_uri, orig_charset)
+    page.traverse_html_form(orig_charset) {|form|
       form.each_textarea {|name, value| return form, name } 
     }
     raise "textarea not found in #{uri}"

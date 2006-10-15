@@ -13,17 +13,17 @@ class WVS::TDiary < WVS::Repo
   end
 
   def self.make_accessor(stable_uri)
-    page_str = WVS::WebClient.read(stable_uri)
+    page_str, orig_charset = WVS::WebClient.read_decode(stable_uri)
     page_tree = HTree(page_str)
     if page_str.last_request_uri != stable_uri
       raise "tDiary update page redirected"
     end
-    form, textarea_name = find_replace_form(page_tree)
+    form, textarea_name = find_replace_form(page_tree, orig_charset)
     self.new(form, stable_uri, textarea_name)
   end
 
-  def self.find_replace_form(page)
-    page.traverse_html_form {|form|
+  def self.find_replace_form(page, orig_charset)
+    page.traverse_html_form(orig_charset) {|form|
       next unless form.has?('replace') && form.input_type('replace') == :submit_button
       form.each_textarea {|name, value| return form, name }
     }

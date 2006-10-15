@@ -6,11 +6,11 @@ module WVS
 end
 
 class WVS::Form
-  def self.make(form_tree, base_uri, referer_uri=nil)
+  def self.make(form_tree, base_uri, referer_uri=nil, orig_charset=nil)
     action_uri = base_uri + form_tree.get_attr('action')
     method = form_tree.get_attr('method')
     enctype = form_tree.get_attr('enctype')
-    form = self.new(action_uri, method, enctype, referer_uri)
+    form = self.new(action_uri, method, enctype, referer_uri, orig_charset)
     form_tree.traverse_element(
       '{http://www.w3.org/1999/xhtml}input',
       '{http://www.w3.org/1999/xhtml}button',
@@ -66,7 +66,7 @@ class WVS::Form
     form
   end
 
-  def initialize(action_uri, method=nil, enctype=nil, referer_uri=nil)
+  def initialize(action_uri, method=nil, enctype=nil, referer_uri=nil, orig_charset=nil)
     @action_uri = action_uri
     method ||= 'get'
     @method = method.downcase
@@ -74,6 +74,7 @@ class WVS::Form
     @enctype = enctype.downcase
     @controls = []
     @referer_uri = referer_uri
+    @orig_charset = orig_charset
   end
   attr_reader :action_uri, :referer_uri
 
@@ -218,6 +219,11 @@ class WVS::Form
         raise "unexpected control type: #{type}"
       end
     }
+    if @orig_charset
+      successful.map! {|name, value|
+        [name.encode_charset(@orig_charset), value.encode_charset(@orig_charset)]
+      }
+    end
     Escape.html_form(successful)
   end
 end

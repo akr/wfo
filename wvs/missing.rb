@@ -60,9 +60,9 @@ unless HTree::Doc::Trav.instance_methods.include? "base_uri"
       return @base_uri
     end
 
-    def traverse_html_form
+    def traverse_html_form(orig_charset=nil)
       traverse_element('{http://www.w3.org/1999/xhtml}form') {|form|
-        yield WVS::Form.make(form, self.base_uri, @request_uri)
+        yield WVS::Form.make(form, self.base_uri, @request_uri, orig_charset)
       }
       nil
     end
