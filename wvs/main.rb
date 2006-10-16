@@ -4,6 +4,7 @@
 #   wvs update [local-filename...]
 #   wvs commit [local-filename...]
 #   wvs diff [-u] [local-filename...]
+#   wvs workdump [local-filename...]
 
 $KCODE = 'e'
 
@@ -49,6 +50,8 @@ module WVS
       do_commit ARGV
     when 'diff', 'di'
       do_diff ARGV
+    when 'workdump'
+      do_workdump ARGV
     else
       err "unknown subcommand : #{subcommand}"
     end
@@ -281,6 +284,13 @@ module WVS
         end
       }
       exit no_diff
+    }
+  end
+
+  def do_workdump(argv)
+    argv.each {|n|
+      puts "#{n} :"
+      pp WorkArea.new(n)
     }
   end
 
