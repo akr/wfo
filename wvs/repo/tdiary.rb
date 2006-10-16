@@ -13,7 +13,7 @@ class WVS::TDiary < WVS::Repo
   end
 
   def self.make_accessor(stable_uri)
-    page_str, orig_charset = WVS::WebClient.read_decode(stable_uri)
+    page_str, orig_charset = WVS::WebClient.read_decode_nocheck(stable_uri)
     page_tree = HTree(page_str)
     if page_str.last_request_uri != stable_uri
       raise "tDiary update page redirected"

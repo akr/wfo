@@ -24,6 +24,10 @@ class WVS::WebClient
     Thread.current[:webclient].read_decode(uri, opts)
   end
 
+  def self.read_decode_nocheck(uri, opts={})
+    Thread.current[:webclient].read_decode_nocheck(uri, opts)
+  end
+
   def self.do_request(uri, req)
     Thread.current[:webclient].do_request(uri, req)
   end
@@ -175,6 +179,16 @@ class WVS::WebClient
     if page_str != round_trip
       raise "cannot decode in round trip manner: #{uri}"
     end
+    OpenURI::Meta.init result, page_str
+    return result, charset
+  end
+
+  def read_decode_nocheck(uri, header={})
+    page_str = self.read(uri, header)
+    unless charset = page_str.charset
+      charset = page_str.guess_charset
+    end
+    result = page_str.decode_charset(charset)
     OpenURI::Meta.init result, page_str
     return result, charset
   end
