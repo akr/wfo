@@ -75,15 +75,12 @@ class WVS::Form
     @enctype = enctype.downcase
     if accept_charset
       @accept_charset = accept_charset.downcase.split(/\s+/)
+    elsif orig_charset
+      @accept_charset = [orig_charset]
     else
-      if orig_charset
-        @accept_charset = [orig_charset]
-      else
-        @accept_charset = []
-      end
+      @accept_charset = ['utf-8']
     end
     @accept_charset.map! {|charset| charset.downcase }
-    @accept_charset << 'utf-8' if !@accept_charset.include?('utf-8')
     @controls = []
     @referer_uri = referer_uri
   end
