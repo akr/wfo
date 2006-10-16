@@ -54,7 +54,7 @@ class WVS::Form
         control.traverse_element('{http://www.w3.org/1999/xhtml}option') {|option|
           next if option.get_attr('disabled')
           selected = option.get_attr('selected') ? :selected : nil
-          options << [selected, option.get_attr('value')]
+          options << [option.get_attr('value'), selected]
         }
         form.add_select(name, multiple, options)
       when '{http://www.w3.org/1999/xhtml}textarea'
@@ -83,6 +83,7 @@ class WVS::Form
     @accept_charset.map! {|charset| charset.downcase }
     @controls = []
     @referer_uri = referer_uri
+    @orig_charset = orig_charset
   end
   attr_reader :action_uri, :referer_uri
 
@@ -221,7 +222,7 @@ class WVS::Form
         successful << [name, value]
       when :select
         selected_options = []
-        value.each {|selected, option| selected_options << option if selected }
+        value.each {|option, selected| selected_options << option if selected }
         selected_options.each {|option| successful << [name, option] }
       else
         raise "unexpected control type: #{type}"
