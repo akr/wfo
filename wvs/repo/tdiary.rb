@@ -6,10 +6,14 @@ class WVS::TDiary < WVS::Repo
   end
 
   def self.find_stable_uri(page)
-    unless /<span class="adminmenu"><a href="(update.rb\?edit=true;year=\d+;month=\d+;day=\d+)">/ =~ page
+    if /<span class="adminmenu"><a href="(update.rb\?edit=true;year=\d+;month=\d+;day=\d+)">/ =~ page
+      page.base_uri + $1 # it assumes base element not exist.
+    elsif /<span class="adminmenu"><a href="update.rb">/ =~ page
+      now = Time.now
+      page.base_uri + "update.rb?edit=true;year=#{now.year};month=#{now.month};day=#{now.day}"
+    else
       raise "update link not found in tDiary page : #{page.last_request_uri}"
     end
-    page.base_uri + $1 # it assumes base element not exist.
   end
 
   def self.make_accessor(stable_uri)
