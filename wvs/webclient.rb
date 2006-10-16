@@ -3,7 +3,6 @@ require 'wvs/form'
 require 'wvs/cookie'
 require 'wvs/auth'
 require 'keyring'
-require 'mconv'
 
 class WVS::WebClient
   def self.do

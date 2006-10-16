@@ -1,15 +1,85 @@
 require 'iconv'
 
 module Mconv
-  def Mconv.internal_mime_charset
+  # locale name syntax defined by OpenI18N Locale Name Guideline.
+  # http://www.openi18n.org/docs/text/LocNameGuide-V11.txt
+  LOCALE_DELIMITERS = /[_.@]/
+  LOCALE_SPECIALS = /[-,=]/
+  LOCALE_NUMBERS = /[0-9]/
+  LOCALE_LETTERS = /[a-zA-Z]/
+  LOCALE_LETTERS_NUMBERS = /[a-zA-Z0-9]/
+  LOCALE_LETTERS_NUMBERS_HYPHEN = /[a-zA-Z0-9-]/
+  LOCALE_LANGUAGE = /#{LOCALE_LETTERS}+/
+  LOCALE_TERRITORY = /#{LOCALE_LETTERS}+/
+  LOCALE_CODESET = /#{LOCALE_LETTERS}+(?:-#{LOCALE_LETTERS_NUMBERS}+)*/
+  LOCALE_MODIFIERS = /#{LOCALE_LETTERS_NUMBERS}+(?:=#{LOCALE_LETTERS_NUMBERS_HYPHEN}*)?/
+  LOCALE_PAT = /\A(#{LOCALE_LANGUAGE})_(#{LOCALE_TERRITORY})\.(#{LOCALE_CODESET})(?:@(#{LOCALE_MODIFIERS}))?\z/
+
+  CodesetToCharset = {
+    'euc-jp'    => 'euc-jp',
+    'eucjp'     => 'euc-jp',
+    'ujis'      => 'euc-jp',
+    'euc-kr'    => 'euc-kr',
+    'shift_jis' => 'shift_jis',
+    'sjis'      => 'shift_jis',
+    'utf-8'     => 'utf-8',
+    'utf8'      => 'utf-8',
+    'iso-8859-1' => 'iso-8859-1',
+  }
+
+  def Mconv.setup(internal_mime_charset=nil)
+    if internal_mime_charset
+      internal_mime_charset = internal_mime_charset.downcase
+    else
+      ctype = ENV['LC_ALL'] || ENV['LC_CTYPE'] || ENV['LANG']
+      case ctype
+      when /\AC\z/, /\APOSIX\z/
+        codeset = 'ISO-8859-1'
+      when LOCALE_PAT
+        codeset = $3
+      else
+        codeset = 'utf-8'
+      end
+      internal_mime_charset = CodesetToCharset[codeset.downcase]
+      if !internal_mime_charset
+        raise "unexpected codeset: #{codeset}"
+      end
+    end
+    case internal_mime_charset
+    when 'euc-jp'
+      kcode = 'e'
+    when 'euc-kr'
+      kcode = 'e'
+    when 'shift_jis'
+      kcode = 's'
+    when 'iso-8859-1'
+      kcode = 'n'
+    when 'utf-8'
+      kcode = 'u'
+    else
+      raise "unexpected MIME charset: #{internal_mime_charset}"
+    end
+    @internal_mime_charset = internal_mime_charset
+    $KCODE = kcode
+  end
+
+  if $KCODE == 'NONE'
+    # xxx: intentional $KCODE = 'n'
+    Mconv.setup
+  else
+    # xxx: euc-kr
     case $KCODE
-    when /\Ae/i; 'euc-jp'
-    when /\As/i; 'shift_jis'
-    when /\Au/i; 'utf-8'
-    when /\An/i; 'iso-8859-1'
+    when /\Ae/i; @internal_mime_charset = 'euc-jp'
+    when /\As/i; @internal_mime_charset = 'shift_jis'
+    when /\Au/i; @internal_mime_charset = 'utf-8'
+    when /\An/i; @internal_mime_charset = 'iso-8859-1'
     else
       raise "unknown $KCODE: #{$KCODE.inspect}"
     end
+  end
+
+  def Mconv.internal_mime_charset
+    @internal_mime_charset.dup
   end
 
   def Mconv.valid_charset?(str)

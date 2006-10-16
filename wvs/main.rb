@@ -6,7 +6,7 @@
 #   wvs diff [-u] [local-filename...]
 #   wvs workdump [local-filename...]
 
-$KCODE = 'e'
+require 'mconv'
 
 require 'optparse'
 require 'open-uri'
