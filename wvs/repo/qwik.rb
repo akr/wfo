@@ -6,7 +6,19 @@ class WVS::Qwik < WVS::Repo
   end
 
   def self.find_stable_uri(page)
-    URI(page.base_uri.to_s.sub(/\.html/, '.edit'))
+    last_request_uri = page.last_request_uri.to_s
+    if /\.html\z/ =~ last_request_uri
+      return URI(last_request_uri.sub(/\.html\z/, '.edit'))
+    else
+      tree = HTree(page)
+      tree.traverse_element("{http://www.w3.org/1999/xhtml}a") {|e|
+        href = e.get_attr('href')
+        if href && /\.edit\z/ =~ href
+          return page.last_request_uri + href
+        end
+      }
+    end
+    raise "edit page could not find : #{last_request_uri}"
   end
 
   def self.make_accessor(edit_uri)
