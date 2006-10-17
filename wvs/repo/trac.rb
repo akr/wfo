@@ -25,7 +25,7 @@ class WVS::Trac < WVS::Repo
     page.traverse_html_form(orig_charset) {|form|
       form.each_textarea {|name, value| return form, name }
     }
-    raise "textarea not found in #{uri}"
+    raise "textarea not found in #{referer_uri}"
   end
 
   def initialize(form, uri, textarea_name)
