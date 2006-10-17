@@ -290,7 +290,7 @@ module WVS
   def do_workdump(argv)
     argv.each {|n|
       puts "#{n} :"
-      pp WorkArea.new(n)
+      pp WorkArea.new(n).instance_eval { @info }
     }
   end
 
