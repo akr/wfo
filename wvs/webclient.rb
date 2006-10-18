@@ -141,7 +141,7 @@ class WVS::WebClient
         end
         sock.post_connection_check(req.uri.host)
       end
-      WVS::RespHTTP.new(req, h.request(req.req))
+      WVS::RespHTTP.new(req, req.do_http(h))
     }
   end
 
@@ -217,10 +217,14 @@ module WVS
       @uri = uri
       @req = req
     end
-    attr_reader :uri, :req
+    attr_reader :uri
 
     def []=(field_name, field_value)
       @req[field_name] = field_value
+    end
+
+    def do_http(http)
+      http.request @req
     end
   end
 
@@ -229,7 +233,7 @@ module WVS
       @request = request
       @resp = resp
     end
-    attr_reader :request, :resp
+    attr_reader :request
 
     def uri
       @request.uri
