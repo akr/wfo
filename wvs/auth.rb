@@ -53,8 +53,8 @@ def (WVS::Auth).apache_authtypekey_handler(webclient, response)
   }
   return nil if !typekey_uri
 
-  resp = typekey_login(webclient, typekey_uri)
-  return nil if resp.code != '302'
+  response = typekey_login(webclient, typekey_uri)
+  return nil if response.code != '302'
   #destination_uri = URI(resp['Location'])
 
   # use uri instead of destination_uri because www.codeblog.org's login.pl
@@ -99,18 +99,15 @@ def (WVS::Auth).typekey_login(webclient, typekey_uri)
   return nil if resp.code != '302'
   return_uri = URI(resp['Location'])
 
-  resp = webclient.do_request_state(WVS::ReqHTTP.get(return_uri))
-  resp = resp.resp
-  resp
+  webclient.do_request_state(WVS::ReqHTTP.get(return_uri))
 end
 
 module WVS
   def Auth.http_basic_auth_handler(webclient, response)
     uri = response.uri
-    resp = response.resp
-    unless resp.code == '401' &&
-           resp['www-authenticate'] &&
-           resp['www-authenticate'] =~ /\A\s*#{Pat::HTTP_Challenge}s*\z/n
+    unless response.code == '401' &&
+           response['www-authenticate'] &&
+           response['www-authenticate'] =~ /\A\s*#{Pat::HTTP_Challenge}s*\z/n
       return nil
     end
     auth_scheme = $1
