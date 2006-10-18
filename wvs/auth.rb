@@ -132,7 +132,7 @@ module WVS
       path_pat = /\A#{uri.path.sub(%r{[^/]*\z}, '')}/
       webclient.add_basic_credential(canonical_root_url, realm, path_pat, credential)
     }
-    webclient.make_request_basic_authenticated(uri, req)
+    webclient.make_request_basic_authenticated(WVS::ReqHTTP.new(uri, req))
     return uri, req
   end
 end

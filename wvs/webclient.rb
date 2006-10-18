@@ -42,16 +42,17 @@ class WVS::WebClient
     @basic_credentials[canonical_root_url] << [realm, path_pat, credential]
   end
 
-  def make_request_basic_authenticated(uri, req)
-    canonical_root_url = uri.dup
+  def make_request_basic_authenticated(request)
+    canonical_root_url = request.uri.dup
     canonical_root_url.path = ""
     canonical_root_url.query = nil
     canonical_root_url.fragment = nil
     canonical_root_url = canonical_root_url.to_s
     return if !@basic_credentials[canonical_root_url]
+    path = request.uri.path
     @basic_credentials[canonical_root_url].each {|realm, path_pat, credential|
-      if path_pat =~ uri.path
-        req['Authorization'] = "Basic #{credential}"
+      if path_pat =~ path
+        request['Authorization'] = "Basic #{credential}"
         break
       end
     }
@@ -110,7 +111,7 @@ class WVS::WebClient
   end
 
   def do_request_state(request)
-    make_request_basic_authenticated(request.uri, request.req)
+    make_request_basic_authenticated(request)
     insert_cookie_header(request)
     resp = do_request_simple(request)
     update_cookies(request.uri, resp['Set-Cookie']) if resp['Set-Cookie']
