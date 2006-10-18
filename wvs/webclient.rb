@@ -117,7 +117,12 @@ class WVS::WebClient
   end
 
   def do_request_simple(uri, req)
-    h = Net::HTTP.new(uri.host, uri.port)
+    if proxy_uri = uri.find_proxy
+      klass = Net::HTTP::Proxy(proxy_uri.host, proxy_uri.port)
+    else
+      klass = Net::HTTP
+    end
+    h = klass.new(uri.host, uri.port)
     if uri.scheme == 'https'
       h.use_ssl = true
       h.verify_mode = OpenSSL::SSL::VERIFY_PEER
