@@ -77,7 +77,10 @@ class KeyRing
   def with_authinfo(protection_domain) # :yield: password
     protection_domain = [protection_domain] if String === protection_domain
     path = search_encrypted_file(protection_domain)
-    s = `#{Escape.shell_command(%W[gpg -d -q --no-tty #{path}])}`
+    s = `#{Escape.shell_command(%W[gpg -d -q #{path}])}`
+    if $? != 0
+      raise AuthInfoNotFound, "gpg failed with #{$?}"
+    end
     begin
       authinfo = KeyRing.decode_strings_safe(s)
       s.vanish!
