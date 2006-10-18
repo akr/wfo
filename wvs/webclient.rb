@@ -74,17 +74,18 @@ class WVS::WebClient
   end
 
   def do_request(uri, req)
-    results = do_redirect_requests(uri, req)
-    results.last.last
+    results = do_redirect_requests(WVS::ReqHTTP.new(uri, req))
+    results.last.last.resp
   end
 
-  def do_redirect_requests(uri, req)
+  def do_redirect_requests(request)
+    uri = request.uri
+    req = request.req
     results = []
     while true
-      resp = do_request_state(WVS::ReqHTTP.new(uri, req))
-      resp = resp.resp
-      results << [uri, req, resp]
-      if /\A(?:301|302|303|307)\z/ =~ resp.code && resp['location']
+      response = do_request_state(request)
+      results << [request, response]
+      if /\A(?:301|302|303|307)\z/ =~ response.code && response['location']
         # RFC 1945 - Hypertext Transfer Protocol -- HTTP/1.0
         #  301 Moved Permanently
         #  302 Moved Temporarily
@@ -97,12 +98,12 @@ class WVS::WebClient
         #  302 Found
         #  303 See Other
         #  307 Temporary Redirect
-        redirect = URI(resp['location'])
+        redirect = URI(response['location'])
         # Although it violates RFC2616, Location: field may have relative
         # URI.  It is converted to absolute URI using uri as a base URI.
-        redirect = uri + redirect if redirect.relative?
+        redirect = request.uri + redirect if redirect.relative?
         req = Net::HTTP::Get.new(redirect.request_uri)
-        uri = redirect
+        request = WVS::ReqHTTP.new(redirect, req)
       else
         break
       end
@@ -287,6 +288,10 @@ module WVS
       @resp = resp
     end
     attr_reader :uri, :resp
+
+    def code
+      @resp.code
+    end
 
     def [](field_name)
       @resp[field_name]
