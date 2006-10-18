@@ -141,7 +141,7 @@ class WVS::WebClient
         end
         sock.post_connection_check(req.uri.host)
       end
-      WVS::RespHTTP.new(req, req.do_http(h))
+      req.do_http(h)
     }
   end
 
@@ -224,7 +224,8 @@ module WVS
     end
 
     def do_http(http)
-      http.request @req
+      resp = http.request(@req)
+      WVS::RespHTTP.new(self, resp)
     end
   end
 
