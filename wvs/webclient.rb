@@ -150,20 +150,19 @@ class WVS::WebClient
     header.each {|k, v| req[k] = v }
 
     while true
-      resp = do_request(WVS::ReqHTTP.new(uri, req))
-      resp = resp.resp
+      response = do_request(WVS::ReqHTTP.new(uri, req))
+      resp = response.resp
       break if resp.code == '200' &&
                WVS::Auth.reqauth_checker.all? {|checker|
                  !checker.call(self, uri, req, resp)
                }
-      r = nil
+      request = nil
       WVS::Auth.auth_handler.each {|h|
-        if r = h.call(self, uri, req, resp)
-          uri, req = r
+        if request = h.call(self, response)
           break
         end
       }
-      if r == nil
+      if request == nil
         raise "no handler for #{resp.code} #{resp.message} in #{uri}"
       end
     end

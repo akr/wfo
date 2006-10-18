@@ -60,7 +60,11 @@ class WVS::Trac < WVS::Repo
   end
 end
 
-def (WVS::Auth).trac_auth_handler(webclient, uri, req, resp)
+def (WVS::Auth).trac_auth_handler(webclient, resp)
+  uri = resp.uri
+  req = resp.request.req
+  resp = resp.resp
+
   unless %r{<a id="tracpowered" href="http://trac.edgewall.com/">} =~ resp.body
     return nil
   end
@@ -78,6 +82,6 @@ def (WVS::Auth).trac_auth_handler(webclient, uri, req, resp)
   return nil if !trac_login_uri
   webclient.read(trac_login_uri)
 
-  return uri, req
+  return WVS::ReqHTTP.get(uri)
 end
 

@@ -74,11 +74,14 @@ def (WVS::Auth).qwik_reqauth_checker(webclient, uri, req, resp)
   %r{<a href=".login"\n>Login</a\n>} =~ resp.body
 end
 
-def (WVS::Auth).qwik_auth_handler(webclient, uri, req, resp)
-  qwik_auth_handler_typekey(webclient, uri, req, resp)
+def (WVS::Auth).qwik_auth_handler(webclient, resp)
+  qwik_auth_handler_typekey(webclient, resp)
 end
 
-def (WVS::Auth).qwik_auth_handler_typekey(webclient, uri, req, resp)
+def (WVS::Auth).qwik_auth_handler_typekey(webclient, resp)
+  uri = resp.uri
+  req = resp.request.req
+  resp = resp.resp
   unless %r{>powered by <a href="http://qwik.jp/"\n>qwikWeb</a} =~ resp.body
     return nil
   end
@@ -119,8 +122,6 @@ def (WVS::Auth).qwik_auth_handler_typekey(webclient, uri, req, resp)
 
   return nil if resp.code != '200'
 
-  req = Net::HTTP::Get.new(uri.request_uri)
-
-  return uri, req
+  return WVS::ReqHTTP.get(uri)
 end
 
