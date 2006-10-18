@@ -80,7 +80,8 @@ class WVS::WebClient
   def do_redirect_requests(uri, req)
     results = []
     while true
-      resp = do_request_state(uri, req)
+      resp = do_request_state(WVS::ReqHTTP.new(uri, req))
+      resp = resp.resp
       results << [uri, req, resp]
       if /\A(?:301|302|303|307)\z/ =~ resp.code && resp['location']
         # RFC 1945 - Hypertext Transfer Protocol -- HTTP/1.0
@@ -108,12 +109,12 @@ class WVS::WebClient
     results
   end
 
-  def do_request_state(uri, req)
-    make_request_basic_authenticated(uri, req)
-    insert_cookie_header(uri, req)
-    resp = do_request_simple(ReqHTTP.new(uri, req))
-    update_cookies(uri, resp['Set-Cookie']) if resp['Set-Cookie']
-    resp.resp
+  def do_request_state(request)
+    make_request_basic_authenticated(request.uri, request.req)
+    insert_cookie_header(request.uri, request.req)
+    resp = do_request_simple(request)
+    update_cookies(request.uri, resp['Set-Cookie']) if resp['Set-Cookie']
+    resp
   end
 
   def do_request_simple(req)
@@ -141,7 +142,7 @@ class WVS::WebClient
         end
         sock.post_connection_check(req.uri.host)
       end
-      RespHTTP.new(req.uri, h.request(req.req))
+      WVS::RespHTTP.new(req.uri, h.request(req.req))
     }
   end
 
@@ -264,7 +265,9 @@ class WVS::WebClient
     }
     result
   end
+end
 
+module WVS
   class ReqHTTP
     def initialize(uri, req)
       @uri = uri

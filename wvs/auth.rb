@@ -74,7 +74,8 @@ def (WVS::Auth).typekey_login(webclient, typekey_uri)
     typekey_login_form.set('username', username)
     typekey_login_form.set('password', password)
     typekey_login_form.make_request {|req|
-      resp = webclient.do_request_state(typekey_login_form.action_uri, req)
+      resp = webclient.do_request_state(WVS::ReqHTTP.new(typekey_login_form.action_uri, req))
+      resp = resp.resp
     }
   }
   # The password vanishing is not perfect, unfortunately.
@@ -87,14 +88,16 @@ def (WVS::Auth).typekey_login(webclient, typekey_uri)
       break
     }
     req = email_form.make_request
-    resp = webclient.do_request_state(email_form.action_uri, req)
+    resp = webclient.do_request_state(WVS::ReqHTTP.new(email_form.action_uri, req))
+    resp = resp.resp
   end
 
   return nil if resp.code != '302'
   return_uri = URI(resp['Location'])
 
   req = Net::HTTP::Get.new(return_uri.request_uri)
-  resp = webclient.do_request_state(return_uri, req)
+  resp = webclient.do_request_state(WVS::ReqHTTP.new(return_uri, req))
+  resp = resp.resp
   resp
 end
 
