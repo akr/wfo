@@ -69,7 +69,7 @@ class WVS::Qwik < WVS::Repo
   end
 end
 
-def (WVS::Auth).qwik_reqauth_checker(webclient, uri, req, resp)
+def (WVS::Auth).qwik_reqauth_checker(webclient, resp)
   %r{<a href=".login"\n>Login</a\n>} =~ resp.body
 end
 

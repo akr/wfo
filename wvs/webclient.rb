@@ -146,15 +146,14 @@ class WVS::WebClient
   end
 
   def read(uri, header={})
-    req = Net::HTTP::Get.new(uri.request_uri)
-    header.each {|k, v| req[k] = v }
+    request = WVS::ReqHTTP.get(uri)
+    header.each {|k, v| request[k] = v }
 
     while true
-      response = do_request(WVS::ReqHTTP.new(uri, req))
-      resp = response.resp
-      break if resp.code == '200' &&
+      response = do_request(request)
+      break if response.code == '200' &&
                WVS::Auth.reqauth_checker.all? {|checker|
-                 !checker.call(self, uri, req, resp)
+                 !checker.call(self, response)
                }
       request = nil
       WVS::Auth.auth_handler.each {|h|
@@ -163,15 +162,15 @@ class WVS::WebClient
         end
       }
       if request == nil
-        raise "no handler for #{resp.code} #{resp.message} in #{uri}"
+        raise "no handler for #{response.code} #{response.message} in #{uri}"
       end
     end
 
-    result = resp.body
+    result = response.body
     OpenURI::Meta.init result
-    result.status = [resp.code, resp.message]
+    result.status = [response.code, response.message]
     result.base_uri = uri
-    resp.each {|name,value| result.meta_add_field name, value }
+    response.each {|name,value| result.meta_add_field name, value }
     result
   end
 
@@ -312,6 +311,13 @@ module WVS
 
     def [](field_name)
       @resp[field_name]
+    end
+
+    def each
+      @resp.each {|field_name, field_value|
+        yield field_name, field_value
+      }
+      nil
     end
 
     def body
