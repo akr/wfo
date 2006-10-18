@@ -111,20 +111,20 @@ class WVS::WebClient
   def do_request_state(uri, req)
     make_request_basic_authenticated(uri, req)
     insert_cookie_header(uri, req)
-    resp = do_request_simple(uri, req)
+    resp = do_request_simple(ReqHTTP.new(uri, req))
     update_cookies(uri, resp['Set-Cookie']) if resp['Set-Cookie']
-    resp
+    resp.resp
   end
 
-  def do_request_simple(uri, req)
-    if proxy_uri = uri.find_proxy
+  def do_request_simple(req)
+    if proxy_uri = req.uri.find_proxy
       # xxx: proxy authentication
       klass = Net::HTTP::Proxy(proxy_uri.host, proxy_uri.port)
     else
       klass = Net::HTTP
     end
-    h = klass.new(uri.host, uri.port)
-    if uri.scheme == 'https'
+    h = klass.new(req.uri.host, req.uri.port)
+    if req.uri.scheme == 'https'
       h.use_ssl = true
       h.verify_mode = OpenSSL::SSL::VERIFY_PEER
       store = OpenSSL::X509::Store.new
@@ -132,16 +132,16 @@ class WVS::WebClient
       h.cert_store = store
     end
     h.start {
-      if uri.scheme == 'https'
+      if req.uri.scheme == 'https'
         sock = h.instance_variable_get(:@socket)
         if sock.respond_to?(:io)
           sock = sock.io # 1.9
         else
           sock = sock.instance_variable_get(:@socket) # 1.8
         end
-        sock.post_connection_check(uri.host)
+        sock.post_connection_check(req.uri.host)
       end
-      h.request req
+      RespHTTP.new(req.uri, h.request(req.req))
     }
   end
 
@@ -263,5 +263,25 @@ class WVS::WebClient
       end
     }
     result
+  end
+
+  class ReqHTTP
+    def initialize(uri, req)
+      @uri = uri
+      @req = req
+    end
+    attr_reader :uri, :req
+  end
+
+  class RespHTTP
+    def initialize(uri, resp)
+      @uri = uri
+      @resp = resp
+    end
+    attr_reader :uri, :resp
+
+    def [](field_name)
+      @resp[field_name]
+    end
   end
 end
