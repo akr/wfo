@@ -141,7 +141,7 @@ class WVS::WebClient
         end
         sock.post_connection_check(req.uri.host)
       end
-      WVS::RespHTTP.new(req.uri, h.request(req.req))
+      WVS::RespHTTP.new(req, h.request(req.req))
     }
   end
 
@@ -293,11 +293,15 @@ module WVS
   end
 
   class RespHTTP
-    def initialize(uri, resp)
-      @uri = uri
+    def initialize(request, resp)
+      @request = request
       @resp = resp
     end
-    attr_reader :uri, :resp
+    attr_reader :request, :resp
+
+    def uri
+      @request.uri
+    end
 
     def code
       @resp.code
