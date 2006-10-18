@@ -46,7 +46,6 @@ class WVS::Trac < WVS::Repo
   def commit
     req = @form.make_request('save')
     resp = WVS::WebClient.do_request(req)
-    resp = resp.resp
     return if resp.code == '200'
     raise "HTTP POST error: #{resp.code} #{resp.message}"
   end
@@ -62,8 +61,6 @@ end
 
 def (WVS::Auth).trac_auth_handler(webclient, resp)
   uri = resp.uri
-  req = resp.request.req
-  resp = resp.resp
 
   unless %r{<a id="tracpowered" href="http://trac.edgewall.com/">} =~ resp.body
     return nil

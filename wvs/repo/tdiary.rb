@@ -52,7 +52,6 @@ class WVS::TDiary < WVS::Repo
   def commit
     req = @form.make_request('replace')
     resp = WVS::WebClient.do_request(req)
-    resp = resp.resp
     return if resp.code == '200'
     raise "HTTP POST error: #{resp.code} #{resp.message}"
   end

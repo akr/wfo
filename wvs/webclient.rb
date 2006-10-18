@@ -306,8 +306,16 @@ module WVS
       @resp.code
     end
 
+    def message
+      @resp.message
+    end
+
     def [](field_name)
       @resp[field_name]
+    end
+
+    def body
+      @resp.body
     end
   end
 end

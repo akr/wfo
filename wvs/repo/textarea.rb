@@ -41,7 +41,6 @@ class WVS::TextArea < WVS::Repo
   def commit
     req = @form.make_request
     resp = WVS::WebClient.do_request(req)
-    resp = resp.resp
     return if resp.code == '200'
     raise "HTTP POST error: #{resp.code} #{resp.message}"
   end
