@@ -118,6 +118,7 @@ class WVS::WebClient
 
   def do_request_simple(uri, req)
     if proxy_uri = uri.find_proxy
+      # xxx: proxy authentication
       klass = Net::HTTP::Proxy(proxy_uri.host, proxy_uri.port)
     else
       klass = Net::HTTP
