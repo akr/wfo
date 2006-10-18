@@ -65,10 +65,10 @@ class WVS::WebClient
     }
   end
 
-  def insert_cookie_header(uri, req)
-    cs = @cookies.reject {|(domain, path, name), c| !c.match?(uri) }
+  def insert_cookie_header(request)
+    cs = @cookies.reject {|(domain, path, name), c| !c.match?(request.uri) }
     if !cs.empty?
-      req['Cookie'] = cs.map {|(domain, path, name), c| c.encode_cookie_field }.join('; ')
+      request['Cookie'] = cs.map {|(domain, path, name), c| c.encode_cookie_field }.join('; ')
     end
   end
 
@@ -111,7 +111,7 @@ class WVS::WebClient
 
   def do_request_state(request)
     make_request_basic_authenticated(request.uri, request.req)
-    insert_cookie_header(request.uri, request.req)
+    insert_cookie_header(request)
     resp = do_request_simple(request)
     update_cookies(request.uri, resp['Set-Cookie']) if resp['Set-Cookie']
     resp
@@ -274,6 +274,10 @@ module WVS
       @req = req
     end
     attr_reader :uri, :req
+
+    def []=(field_name, field_value)
+      @req[field_name] = field_value
+    end
   end
 
   class RespHTTP
