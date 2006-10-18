@@ -28,8 +28,8 @@ class WVS::WebClient
     Thread.current[:webclient].read_decode_nocheck(uri, opts)
   end
 
-  def self.do_request(uri, req)
-    Thread.current[:webclient].do_request(uri, req)
+  def self.do_request(request)
+    Thread.current[:webclient].do_request(request)
   end
 
   def initialize
@@ -73,9 +73,9 @@ class WVS::WebClient
     end
   end
 
-  def do_request(uri, req)
-    results = do_redirect_requests(WVS::ReqHTTP.new(uri, req))
-    results.last.last.resp
+  def do_request(request)
+    results = do_redirect_requests(request)
+    results.last.last
   end
 
   def do_redirect_requests(request)
@@ -153,7 +153,8 @@ class WVS::WebClient
     header.each {|k, v| req[k] = v }
 
     while true
-      resp = do_request(uri, req)
+      resp = do_request(WVS::ReqHTTP.new(uri, req))
+      resp = resp.resp
       break if resp.code == '200' &&
                WVS::Auth.reqauth_checker.all? {|checker|
                  !checker.call(self, uri, req, resp)
