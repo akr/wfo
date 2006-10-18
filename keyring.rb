@@ -79,6 +79,7 @@ class KeyRing
     path = search_encrypted_file(protection_domain)
     s = `#{Escape.shell_command(%W[gpg -d -q #{path}])}`
     if $? != 0
+      s.vanish!
       raise AuthInfoNotFound, "gpg failed with #{$?}"
     end
     begin
