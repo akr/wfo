@@ -162,14 +162,14 @@ class WVS::WebClient
         end
       }
       if request == nil
-        raise "no handler for #{response.code} #{response.message} in #{uri}"
+        raise "no handler for #{response.code} #{response.message} in #{response.uri}"
       end
     end
 
     result = response.body
     OpenURI::Meta.init result
     result.status = [response.code, response.message]
-    result.base_uri = uri
+    result.base_uri = response.uri # xxx: Content-Location
     response.each {|name,value| result.meta_add_field name, value }
     result
   end

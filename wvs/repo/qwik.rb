@@ -79,8 +79,6 @@ end
 
 def (WVS::Auth).qwik_auth_handler_typekey(webclient, resp)
   uri = resp.uri
-  req = resp.request.req
-  resp = resp
   unless %r{>powered by <a href="http://qwik.jp/"\n>qwikWeb</a} =~ resp.body
     return nil
   end

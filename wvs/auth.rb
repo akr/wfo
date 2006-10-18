@@ -23,7 +23,6 @@ end
 
 def (WVS::Auth).codeblog_auth_handler(webclient, response)
   uri = response.uri
-  req = response.request.req
   unless response.code == '403' &&
          uri.scheme == 'https' &&
          uri.host == 'www.codeblog.org' &&
