@@ -79,8 +79,6 @@ class WVS::WebClient
   end
 
   def do_redirect_requests(request)
-    uri = request.uri
-    req = request.req
     results = []
     while true
       response = do_request_state(request)
@@ -102,8 +100,7 @@ class WVS::WebClient
         # Although it violates RFC2616, Location: field may have relative
         # URI.  It is converted to absolute URI using uri as a base URI.
         redirect = request.uri + redirect if redirect.relative?
-        req = Net::HTTP::Get.new(redirect.request_uri)
-        request = WVS::ReqHTTP.new(redirect, req)
+        request = WVS::ReqHTTP.get(redirect)
       else
         break
       end
@@ -272,6 +269,18 @@ end
 
 module WVS
   class ReqHTTP
+    def self.get(uri)
+      req = Net::HTTP::Get.new(uri.request_uri)
+      self.new(uri, req)
+    end
+
+    def self.post(uri, content_type, query)
+      req = Net::HTTP::Post.new(uri.request_uri)
+      req.body = query
+      req['Content-Type'] = content_type
+      self.new(uri, req)
+    end
+
     def initialize(uri, req)
       @uri = uri
       @req = req

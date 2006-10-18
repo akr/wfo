@@ -45,8 +45,7 @@ class WVS::Trac < WVS::Repo
 
   def commit
     req = @form.make_request('save')
-    req["Referer"] = @uri.to_s
-    resp = WVS::WebClient.do_request(WVS::ReqHTTP.new(@form.action_uri, req))
+    resp = WVS::WebClient.do_request(req)
     resp = resp.resp
     return if resp.code == '200'
     raise "HTTP POST error: #{resp.code} #{resp.message}"

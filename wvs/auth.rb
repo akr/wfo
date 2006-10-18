@@ -74,7 +74,7 @@ def (WVS::Auth).typekey_login(webclient, typekey_uri)
     typekey_login_form.set('username', username)
     typekey_login_form.set('password', password)
     typekey_login_form.make_request {|req|
-      resp = webclient.do_request_state(WVS::ReqHTTP.new(typekey_login_form.action_uri, req))
+      resp = webclient.do_request_state(req)
       resp = resp.resp
     }
   }
@@ -88,15 +88,14 @@ def (WVS::Auth).typekey_login(webclient, typekey_uri)
       break
     }
     req = email_form.make_request
-    resp = webclient.do_request_state(WVS::ReqHTTP.new(email_form.action_uri, req))
+    resp = webclient.do_request_state(req)
     resp = resp.resp
   end
 
   return nil if resp.code != '302'
   return_uri = URI(resp['Location'])
 
-  req = Net::HTTP::Get.new(return_uri.request_uri)
-  resp = webclient.do_request_state(WVS::ReqHTTP.new(return_uri, req))
+  resp = webclient.do_request_state(WVS::ReqHTTP.get(return_uri))
   resp = resp.resp
   resp
 end
@@ -132,7 +131,7 @@ module WVS
       path_pat = /\A#{uri.path.sub(%r{[^/]*\z}, '')}/
       webclient.add_basic_credential(canonical_root_url, realm, path_pat, credential)
     }
-    webclient.make_request_basic_authenticated(WVS::ReqHTTP.new(uri, req))
+    webclient.make_request_basic_authenticated(WVS::ReqHTTP.new(uri, req)) # xxx: update req destructively.
     return uri, req
   end
 end

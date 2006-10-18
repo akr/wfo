@@ -171,7 +171,13 @@ class WVS::Form
         request_uri = @action_uri.request_uri + "?"
         request_uri += query
         secrets << request_uri
-        req = Net::HTTP::Get.new(@action_uri.request_uri + "?" + query)
+        uri = @action_uri.dup
+        if uri.query
+          uri.query << '?' << query
+        else
+          uri.query = query
+        end
+        req = WVS::ReqHTTP.get(uri)
       else
         raise "unexpected enctype: #{@enctype}"
       end
@@ -180,9 +186,7 @@ class WVS::Form
       when 'application/x-www-form-urlencoded'
         query = encode_application_x_www_form_urlencoded(submit_name)
         secrets << query
-        req = Net::HTTP::Post.new(@action_uri.request_uri)
-        req.body = query
-        req['Content-Type'] = 'application/x-www-form-urlencoded'
+        req = WVS::ReqHTTP.post(@action_uri, 'application/x-www-form-urlencoded', query)
       else
         raise "unexpected enctype: #{@enctype}"
       end

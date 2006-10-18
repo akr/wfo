@@ -55,8 +55,7 @@ class WVS::Qwik < WVS::Repo
 
   def commit
     req = @form.make_request('save')
-    req["Referer"] = @uri.to_s
-    resp = WVS::WebClient.do_request(WVS::ReqHTTP.new(@form.action_uri, req))
+    resp = WVS::WebClient.do_request(req)
     resp = resp.resp
     return if resp.code == '200'
     raise "HTTP POST error: #{resp.code} #{resp.message}"
@@ -87,8 +86,7 @@ def (WVS::Auth).qwik_auth_handler_typekey(webclient, uri, req, resp)
     return nil
   end
   qwik_login_uri = uri + ".login"
-  req = Net::HTTP::Get.new(qwik_login_uri.request_uri)
-  resp = webclient.do_request_state(WVS::ReqHTTP.new(qwik_login_uri, req))
+  resp = webclient.do_request_state(WVS::ReqHTTP.get(qwik_login_uri))
   resp = resp.resp
   if resp.code == '200'
     qwik_typekey_uri = nil
@@ -106,8 +104,7 @@ def (WVS::Auth).qwik_auth_handler_typekey(webclient, uri, req, resp)
     return nil
   end
 
-  req = Net::HTTP::Get.new(qwik_typekey_uri.request_uri)
-  resp = webclient.do_request_state(WVS::ReqHTTP.new(qwik_typekey_uri, req))
+  resp = webclient.do_request_state(WVS::ReqHTTP.get(qwik_typekey_uri))
   resp = resp.resp
   return nil if resp.code != '302'
   typekey_uri = URI(resp['Location'])
@@ -116,8 +113,7 @@ def (WVS::Auth).qwik_auth_handler_typekey(webclient, uri, req, resp)
 
   if resp.code == '302' # codeblog
     codeblog_uri = URI(resp['Location'])
-    req = Net::HTTP::Get.new(codeblog_uri.request_uri)
-    resp = webclient.do_request_state(WVS::ReqHTTP.new(codeblog_uri, req))
+    resp = webclient.do_request_state(WVS::ReqHTTP.get(codeblog_uri))
     resp = resp.resp
   end
 
