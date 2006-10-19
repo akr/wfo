@@ -230,9 +230,8 @@ module WVS
         result = WVS::RespHTTP.new(self, resp)
       when "POST"
         req = Net::HTTP::Post.new(@uri.request_uri)
-        req.body = @body
         @header.each {|field_name, field_value| req[field_name] = field_value }
-        resp = http.request(req)
+        resp = http.request(req, @body)
         result = WVS::RespHTTP.new(self, resp)
       else
         raise ArgumentError, "unexpected method: #{@method}"
