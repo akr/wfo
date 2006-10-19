@@ -27,21 +27,23 @@ class WVS::Qwik < WVS::Repo
     if page_str.last_request_uri != uri
       raise "qwikWeb edit page redirected"
     end
-    form, textarea_name = find_textarea_form(page_tree, orig_charset)
-    self.new(form, uri, textarea_name)
+    form, textarea_name, submit_name = find_textarea_form(page_tree, orig_charset)
+    self.new(form, uri, textarea_name, submit_name)
   end
 
   def self.find_textarea_form(page, orig_charset)
     page.traverse_html_form(orig_charset) {|form|
-      form.each_textarea {|name, value| return form, name }
+      next unless form.input_type('save') == :submit_button
+      form.each_textarea {|name, value| return form, name, 'save' }
     }
     raise "textarea not found in #{page.request_uri}"
   end
 
-  def initialize(form, uri, textarea_name)
+  def initialize(form, uri, textarea_name, submit_name)
     @form = form
     @uri = uri
     @textarea_name = textarea_name
+    @submit_name = submit_name
   end
   attr_reader :form, :textarea_name
 
@@ -54,7 +56,7 @@ class WVS::Qwik < WVS::Repo
   end
 
   def commit
-    req = @form.make_request('save')
+    req = @form.make_request(@submit_name)
     resp = WVS::WebClient.do_request(req)
     return if resp.code == '200'
     raise "HTTP POST error: #{resp.code} #{resp.message}"

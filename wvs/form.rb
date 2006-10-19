@@ -137,7 +137,7 @@ class WVS::Form
 
   def input_type(name)
     c = @controls.assoc(name)
-    raise IndexError, "no control : #{name}" if !c
+    return nil if !c
     return c[2]
   end
 
