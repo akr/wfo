@@ -126,7 +126,7 @@ class WVS::Form
   def set(name, value)
     c = @controls.assoc(name)
     raise IndexError, "no control : #{name}" if !c
-    c[1] = value
+    c[1] = value.to_str
   end
 
   def fetch(name)
@@ -235,7 +235,7 @@ class WVS::Form
     accept_charset = @accept_charset.dup
     charset = accept_charset.shift
     begin
-      encoded_successful = successful.map! {|name, value|
+      encoded_successful = successful.map {|name, value|
         [name.encode_charset_exc(charset), value.encode_charset_exc(charset)]
       }
     rescue Iconv::Failure
