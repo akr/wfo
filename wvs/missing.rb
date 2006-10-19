@@ -52,7 +52,7 @@ unless HTree::Doc::Trav.instance_methods.include? "base_uri"
     def base_uri
       return @base_uri if defined? @base_uri
       traverse_element('{http://www.w3.org/1999/xhtml}base') {|elem|
-        base_uri = URI.parse(elem.get_attr('href'))
+        base_uri = URI(elem.get_attr('href'))
         base_uri = @protocol_base_uri + base_uri if @protocol_base_uri
         @base_uri = base_uri
       }
