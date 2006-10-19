@@ -202,30 +202,42 @@ end
 module WVS
   class ReqHTTP
     def self.get(uri)
-      req = Net::HTTP::Get.new(uri.request_uri)
-      self.new(uri, req)
+      self.new('GET', uri)
     end
 
     def self.post(uri, content_type, query)
-      req = Net::HTTP::Post.new(uri.request_uri)
-      req.body = query
-      req['Content-Type'] = content_type
-      self.new(uri, req)
+      self.new('POST', uri, {'Content-Type'=>content_type}, query)
     end
 
-    def initialize(uri, req)
+    def initialize(method, uri, header={}, body=nil)
+      @method = method.upcase
       @uri = uri
-      @req = req
+      @header = header
+      @body = body
     end
     attr_reader :uri
 
     def []=(field_name, field_value)
-      @req[field_name] = field_value
+      @header[field_name] = field_value
     end
 
     def do_http(http)
-      resp = http.request(@req)
-      WVS::RespHTTP.new(self, resp)
+      case @method
+      when "GET"
+        req = Net::HTTP::Get.new(@uri.request_uri)
+        @header.each {|field_name, field_value| req[field_name] = field_value }
+        resp = http.request(req)
+        result = WVS::RespHTTP.new(self, resp)
+      when "POST"
+        req = Net::HTTP::Post.new(@uri.request_uri)
+        req.body = @body
+        @header.each {|field_name, field_value| req[field_name] = field_value }
+        resp = http.request(req)
+        result = WVS::RespHTTP.new(self, resp)
+      else
+        raise ArgumentError, "unexpected method: #{@method}"
+      end
+      result
     end
   end
 
