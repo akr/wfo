@@ -55,7 +55,7 @@ module Escape
     }.join(sep)
   end
 
-  def html_form(pairs, sep=';')
+  def html_form(pairs, sep='&')
     r = ''
     first = true
     pairs.each {|k, v|

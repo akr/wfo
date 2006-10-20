@@ -26,6 +26,7 @@ require 'wfo/repo'
 require 'wfo/repo/tdiary'
 require 'wfo/repo/qwik'
 require 'wfo/repo/trac'
+require 'wfo/repo/pukiwiki'
 
 require 'wfo/repo/textarea'
 
