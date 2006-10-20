@@ -1,0 +1,5 @@
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+bin/wvs : bin/wvs.in $(wildcard *.rb wvs/*.rb wvs/repo/*.rb)
+	@RUBY@ $(srcdir)/rb-link -o $@ $(srcdir)/bin/wvs.in
