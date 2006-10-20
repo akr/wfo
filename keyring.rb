@@ -54,7 +54,7 @@
 #   % echo typekey-username typekey-password | gpg --comment TypeKey -e -a --default-recipient-self > typekey.asc
 #
 # * HTTP Basic Authentication
-#   % echo username password | gpg --comment 'canonical-root-url "realm"' -e -a --default-recipient-self > service.asc
+#   % echo username password | gpg --comment 'canonical-root-url basic "realm"' -e -a --default-recipient-self > service.asc
 
 require 'vanish'
 require 'pathname'
@@ -114,13 +114,13 @@ class KeyRing
     ["TypeKey"]
   end
 
-  def self.http_protection_domain(uri, realm)
+  def self.http_protection_domain(uri, scheme, realm)
     uri = uri.dup
     # make it canonical root URL
     uri.path = ""
     uri.query = nil
     uri.fragment = nil
-    [uri.to_s, realm]
+    [uri.to_s, scheme, realm]
   end
 
   def self.encode_strings(strings)
@@ -129,7 +129,7 @@ class KeyRing
         s
       else
         '"' +
-        s.gsub(/[^!#-\[\]-~]/n) {|ch|
+        s.gsub(/[^ !#-\[\]-~]/n) {|ch|
           case ch
           when /["\\]/
             '\\' + ch

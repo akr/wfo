@@ -118,9 +118,9 @@ module WFO
     k, v = params[0]
     return nil if /\Arealm\z/i !~ k
     realm = v
-    protection_domain = KeyRing.http_protection_domain(uri, realm)
+    protection_domain = KeyRing.http_protection_domain(uri, 'basic', realm)
     canonical_root_url = protection_domain[0]
-    KeyRing.with_authinfo(KeyRing.http_protection_domain(uri, realm)) {|username, password|
+    KeyRing.with_authinfo(protection_domain) {|username, password|
       user_pass = "#{username}:#{password}"
       credential = [user_pass].pack("m")
       user_pass.vanish!
