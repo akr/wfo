@@ -1,10 +1,10 @@
 # usage:
-#   wvs checkout [-t repo_type] URL [local-filename][.ext]
-#   wvs status [-u] [local-filename...]
-#   wvs update [local-filename...]
-#   wvs commit [local-filename...]
-#   wvs diff [-u] [local-filename...]
-#   wvs workdump [local-filename...]
+#   wfo checkout [-t repo_type] URL [local-filename][.ext]
+#   wfo status [-u] [local-filename...]
+#   wfo update [local-filename...]
+#   wfo commit [local-filename...]
+#   wfo diff [-u] [local-filename...]
+#   wfo workdump [local-filename...]
 
 require 'mconv'
 
@@ -13,23 +13,23 @@ require 'open-uri'
 require 'pathname'
 require 'tempfile'
 
-module WVS
+module WFO
 end
 
-require 'wvs/missing'
-require 'wvs/pat'
+require 'wfo/missing'
+require 'wfo/pat'
 
-require 'wvs/workarea'
-require 'wvs/webclient'
+require 'wfo/workarea'
+require 'wfo/webclient'
 
-require 'wvs/repo'
-require 'wvs/repo/tdiary'
-require 'wvs/repo/qwik'
-require 'wvs/repo/trac'
+require 'wfo/repo'
+require 'wfo/repo/tdiary'
+require 'wfo/repo/qwik'
+require 'wfo/repo/trac'
 
-require 'wvs/repo/textarea'
+require 'wfo/repo/textarea'
 
-module WVS
+module WFO
   module_function
 
   def err(msg)
@@ -59,7 +59,7 @@ module WVS
 
   def do_checkout(argv)
     opt = OptionParser.new
-    opt.banner = 'Usage: wvs checkout [-t repo_type] URL [local-filename]'
+    opt.banner = 'Usage: wfo checkout [-t repo_type] URL [local-filename]'
     opt_t = nil; opt.def_option('-t repo_type', "repository type (#{Repo.available_types})") {|v|
       opt_t = v
     }
@@ -117,7 +117,7 @@ module WVS
 
   def do_status(argv)
     opt = OptionParser.new
-    opt.banner = 'Usage: wvs status [options] [local-filename...]'
+    opt.banner = 'Usage: wfo status [options] [local-filename...]'
     opt_u = false; opt.def_option('-u', 'update check') { opt_u = true }
     opt.def_option('-h', 'help') { puts opt; exit 0 }
     opt.parse!(argv)
@@ -187,9 +187,9 @@ module WVS
   end
 
   def merge(local_text, original_text, remote_text)
-    original_file = tempfile("wvs.original", original_text)
-    local_file = tempfile("wvs.local", local_text)
-    remote_file = tempfile("wvs.remote", remote_text)
+    original_file = tempfile("wfo.original", original_text)
+    local_file = tempfile("wfo.local", local_text)
+    remote_file = tempfile("wfo.remote", remote_text)
     command = ['diff3', '-mE',
       '-L', 'edited by you',
       '-L', 'before edited',
@@ -256,7 +256,7 @@ module WVS
 
   def do_diff(argv)
     opt = OptionParser.new
-    opt.banner = 'Usage: wvs diff [options] [local-filename...]'
+    opt.banner = 'Usage: wfo diff [options] [local-filename...]'
     opt_u = false; opt.def_option('-u', 'update check') { opt_u = true }
     opt.def_option('-h', 'help') { puts opt; exit 0 }
     opt.parse!(argv)
@@ -275,8 +275,8 @@ module WVS
         end
         if other_text != local_text
           no_diff = false
-          other_file = tempfile("wvs.other", other_text)
-          local_file = tempfile("wvs.local", local_text)
+          other_file = tempfile("wfo.other", other_text)
+          local_file = tempfile("wfo.local", local_text)
           command = ['diff', '-u',
             "--label=#{other_label}", other_file.path,
             "--label=#{w.filename}", local_file.path]
@@ -315,4 +315,4 @@ module WVS
 
 end
 
-WVS.main
+WFO.main

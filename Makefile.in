@@ -5,8 +5,8 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 bindir = @bindir@
 
-bin/wvs : bin/wvs.in $(wildcard *.rb wvs/*.rb wvs/repo/*.rb) $(srcdir)/Makefile
-	@RUBY@ $(srcdir)/rb-link -o $@ $(srcdir)/bin/wvs.in
+bin/wfo : bin/wfo.in $(wildcard *.rb wfo/*.rb wfo/repo/*.rb) $(srcdir)/Makefile
+	@RUBY@ $(srcdir)/rb-link -o $@ $(srcdir)/bin/wfo.in
 
-install : bin/wvs
-	install --mode=755 -D bin/wvs $(bindir)/wvs
+install : bin/wfo
+	install --mode=755 -D bin/wfo $(bindir)/wfo

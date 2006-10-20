@@ -1,10 +1,10 @@
 require 'net/https'
-require 'wvs/form'
-require 'wvs/cookie'
-require 'wvs/auth'
+require 'wfo/form'
+require 'wfo/cookie'
+require 'wfo/auth'
 require 'keyring'
 
-class WVS::WebClient
+class WFO::WebClient
   def self.do
     webclient = self.new
     old = Thread.current[:webclient]
@@ -59,7 +59,7 @@ class WVS::WebClient
   end
 
   def update_cookies(uri, set_cookie_field)
-    cs = WVS::Cookie.parse(uri, set_cookie_field)
+    cs = WFO::Cookie.parse(uri, set_cookie_field)
     cs.each {|c|
       key = [c.domain, c.path, c.name].freeze
       @cookies[key] = c
@@ -100,7 +100,7 @@ class WVS::WebClient
         # Although it violates RFC2616, Location: field may have relative
         # URI.  It is converted to absolute URI using uri as a base URI.
         redirect = request.uri + redirect if redirect.relative?
-        request = WVS::ReqHTTP.get(redirect)
+        request = WFO::ReqHTTP.get(redirect)
       else
         break
       end
@@ -146,17 +146,17 @@ class WVS::WebClient
   end
 
   def read(uri, header={})
-    request = WVS::ReqHTTP.get(uri)
+    request = WFO::ReqHTTP.get(uri)
     header.each {|k, v| request[k] = v }
 
     while true
       response = do_request(request)
       break if response.code == '200' &&
-               WVS::Auth.reqauth_checker.all? {|checker|
+               WFO::Auth.reqauth_checker.all? {|checker|
                  !checker.call(self, response)
                }
       request = nil
-      WVS::Auth.auth_handler.each {|h|
+      WFO::Auth.auth_handler.each {|h|
         if request = h.call(self, response)
           break
         end
@@ -199,7 +199,7 @@ class WVS::WebClient
   end
 end
 
-module WVS
+module WFO
   class ReqHTTP
     def self.get(uri)
       self.new('GET', uri)
@@ -227,12 +227,12 @@ module WVS
         req = Net::HTTP::Get.new(@uri.request_uri)
         @header.each {|field_name, field_value| req[field_name] = field_value }
         resp = http.request(req)
-        result = WVS::RespHTTP.new(self, resp)
+        result = WFO::RespHTTP.new(self, resp)
       when "POST"
         req = Net::HTTP::Post.new(@uri.request_uri)
         @header.each {|field_name, field_value| req[field_name] = field_value }
         resp = http.request(req, @body)
-        result = WVS::RespHTTP.new(self, resp)
+        result = WFO::RespHTTP.new(self, resp)
       else
         raise ArgumentError, "unexpected method: #{@method}"
       end

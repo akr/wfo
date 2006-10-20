@@ -1,4 +1,4 @@
-module WVS::Auth
+module WFO::Auth
   @reqauth_checker = []
   @auth_handler = []
 
@@ -12,16 +12,16 @@ module WVS::Auth
   end
 end
 
-class << WVS::Auth
+class << WFO::Auth
   attr_reader :reqauth_checker
   attr_reader :auth_handler
 
   def singleton_method_added(name)
-    WVS::Auth.added(name)
+    WFO::Auth.added(name)
   end
 end
 
-def (WVS::Auth).codeblog_auth_handler(webclient, response)
+def (WFO::Auth).codeblog_auth_handler(webclient, response)
   uri = response.uri
   unless response.code == '403' &&
          uri.scheme == 'https' &&
@@ -32,7 +32,7 @@ def (WVS::Auth).codeblog_auth_handler(webclient, response)
   apache_authtypekey_handler(webclient, response)
 end
 
-def (WVS::Auth).apache_authtypekey_handler(webclient, response)
+def (WFO::Auth).apache_authtypekey_handler(webclient, response)
   uri = response.uri
   errpage = response.body
   return nil if />Log in via TypeKey</ !~ errpage
@@ -56,13 +56,13 @@ def (WVS::Auth).apache_authtypekey_handler(webclient, response)
   # use uri instead of destination_uri because www.codeblog.org's login.pl
   # had a URI escaping problem.
 
-  return WVS::ReqHTTP.get(uri)
+  return WFO::ReqHTTP.get(uri)
 end
 
-def (WVS::Auth).typekey_login(webclient, typekey_uri)
+def (WFO::Auth).typekey_login(webclient, typekey_uri)
   typekey_login_form = nil
   HTree(typekey_uri).traverse_element('{http://www.w3.org/1999/xhtml}form') {|form|
-    form = WVS::Form.make(form, typekey_uri)
+    form = WFO::Form.make(form, typekey_uri)
     if form.has?('username') && form.has?('password')
       typekey_login_form = form
       break
@@ -83,7 +83,7 @@ def (WVS::Auth).typekey_login(webclient, typekey_uri)
   if resp.code == '200' # send email address or not?
     email_form = nil
     HTree(resp.body).traverse_element('{http://www.w3.org/1999/xhtml}form') {|form|
-      email_form = WVS::Form.make(form, typekey_login_form.action_uri)
+      email_form = WFO::Form.make(form, typekey_login_form.action_uri)
       break
     }
     req = email_form.make_request
@@ -93,10 +93,10 @@ def (WVS::Auth).typekey_login(webclient, typekey_uri)
   return nil if resp.code != '302'
   return_uri = URI(resp['Location'])
 
-  webclient.do_request_state(WVS::ReqHTTP.get(return_uri))
+  webclient.do_request_state(WFO::ReqHTTP.get(return_uri))
 end
 
-module WVS
+module WFO
   def Auth.http_basic_auth_handler(webclient, response)
     uri = response.uri
     unless response.code == '401' &&

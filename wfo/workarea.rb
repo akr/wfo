@@ -1,14 +1,14 @@
 require 'zlib'
 
-class WVS::WorkArea
+class WFO::WorkArea
   def self.has?(filename)
     n = Pathname.new(filename)
-    info_path = n.dirname + '.wvs' + "i_#{n.basename}.gz"
+    info_path = n.dirname + '.wfo' + "i_#{n.basename}.gz"
     info_path.exist?
   end
 
   def self.each_filename(dir=Pathname.new('.'))
-    (dir + '.wvs').each_entry {|n|
+    (dir + '.wfo').each_entry {|n|
       if /\Ai_(.*)\.gz\z/ =~ n.basename.to_s
         yield dir + $1
       end
@@ -17,7 +17,7 @@ class WVS::WorkArea
 
   def initialize(filename, repository_type=nil, url=nil, form=nil, textarea_name=nil)
     @filename = Pathname.new(filename)
-    @info_path = @filename.dirname + '.wvs' + "i_#{@filename.basename}.gz"
+    @info_path = @filename.dirname + '.wfo' + "i_#{@filename.basename}.gz"
     if url
       raise "alread exists : #{@info_path}" if @info_path.exist?
       @url = url.dup
@@ -37,7 +37,7 @@ class WVS::WorkArea
   attr_reader :filename, :url
 
   def make_accessor
-    WVS::Repo.fetch_class(@info['repository_type']).make_accessor(@info['URL'])
+    WFO::Repo.fetch_class(@info['repository_type']).make_accessor(@info['URL'])
   end
 
   def store

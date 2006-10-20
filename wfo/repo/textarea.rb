@@ -1,6 +1,6 @@
 require 'htree'
 
-class WVS::TextArea < WVS::Repo
+class WFO::TextArea < WFO::Repo
   def self.applicable?(page)
     %r{<textarea}i =~ page
   end
@@ -10,7 +10,7 @@ class WVS::TextArea < WVS::Repo
   end
 
   def self.make_accessor(uri)
-    page_str, orig_charset = WVS::WebClient.read_decode(uri)
+    page_str, orig_charset = WFO::WebClient.read_decode(uri)
     page_tree = HTree(page_str)
     form, textarea_name = find_textarea_form(page_tree, orig_charset)
     self.new(form, uri, textarea_name, nil)
@@ -27,5 +27,5 @@ class WVS::TextArea < WVS::Repo
     @form.action_uri.to_s.sub(%r{\A.*/}, '')
   end
 
-  include WVS::RepoTextArea
+  include WFO::RepoTextArea
 end

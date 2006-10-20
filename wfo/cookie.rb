@@ -1,7 +1,7 @@
-module WVS
+module WFO
 end
 
-class WVS::Cookie
+class WFO::Cookie
   AttrPat = /[^=;,]+/
   QuotedStringPat = /"[\r\n\t !#-\377]*"/
   ObsValuePat = /[A-Za-z]{3}, \d\d-[A-Za-z]{3}-\d\d(?:\d\d+)? \d\d:\d\d:\d\d GMT/

@@ -1,4 +1,4 @@
-class WVS::Repo
+class WFO::Repo
   @repo_classes = []
 
   def self.inherited(subclass)
@@ -25,7 +25,7 @@ class WVS::Repo
   end
 
   def self.find_class_and_stable_uri(url, type=nil)
-    page = WVS::WebClient.read(url)
+    page = WFO::WebClient.read(url)
     if type
       c = fetch_class(type)
       stable_uri = c.find_stable_uri(page)
@@ -47,7 +47,7 @@ class WVS::Repo
   end
 end
 
-module WVS::RepoTextArea
+module WFO::RepoTextArea
   def initialize(form, uri, textarea_name, submit_name)
     @form = form
     @uri = uri
@@ -66,7 +66,7 @@ module WVS::RepoTextArea
 
   def commit
     req = @form.make_request(@submit_name)
-    resp = WVS::WebClient.do_request(req)
+    resp = WFO::WebClient.do_request(req)
     return if resp.code == '200'
     raise "HTTP POST error: #{resp.code} #{resp.message}"
   end

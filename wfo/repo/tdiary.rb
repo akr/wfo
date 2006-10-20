@@ -1,6 +1,6 @@
 require 'htree'
 
-class WVS::TDiary < WVS::Repo
+class WFO::TDiary < WFO::Repo
   def self.applicable?(page)
     /<meta name="generator" content="tDiary/ =~ page
   end
@@ -17,7 +17,7 @@ class WVS::TDiary < WVS::Repo
   end
 
   def self.make_accessor(uri)
-    page_str, orig_charset = WVS::WebClient.read_decode_nocheck(uri)
+    page_str, orig_charset = WFO::WebClient.read_decode_nocheck(uri)
     page_tree = HTree(page_str)
     if page_str.last_request_uri != uri
       raise "tDiary update page redirected"
@@ -41,5 +41,5 @@ class WVS::TDiary < WVS::Repo
     "%d-%02d-%02d" % [y, m, d]
   end
 
-  include WVS::RepoTextArea
+  include WFO::RepoTextArea
 end

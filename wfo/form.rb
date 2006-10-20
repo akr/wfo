@@ -2,10 +2,10 @@ require 'vanish'
 require 'escape'
 require 'net/https'
 
-module WVS
+module WFO
 end
 
-class WVS::Form
+class WFO::Form
   def self.make(form_tree, base_uri, referer_uri=nil, orig_charset=nil)
     action_uri = base_uri + form_tree.get_attr('action')
     method = form_tree.get_attr('method')
@@ -177,7 +177,7 @@ class WVS::Form
         else
           uri.query = query
         end
-        req = WVS::ReqHTTP.get(uri)
+        req = WFO::ReqHTTP.get(uri)
       else
         raise "unexpected enctype: #{@enctype}"
       end
@@ -186,7 +186,7 @@ class WVS::Form
       when 'application/x-www-form-urlencoded'
         query = encode_application_x_www_form_urlencoded(submit_name)
         secrets << query
-        req = WVS::ReqHTTP.post(@action_uri, 'application/x-www-form-urlencoded', query)
+        req = WFO::ReqHTTP.post(@action_uri, 'application/x-www-form-urlencoded', query)
       else
         raise "unexpected enctype: #{@enctype}"
       end

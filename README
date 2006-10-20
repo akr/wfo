@@ -26,7 +26,7 @@ GPL
 
 == Download
 
-  % svn co svn://svn@rx1620.fsij.org/akr/wvs/trunk wvs
+  % svn co svn://svn@rx1620.fsij.org/akr/wfo/trunk wfo
 
 == Install
 
@@ -41,12 +41,12 @@ configure option:
 
 == Usage
 
-  wvs checkout [-t repo_type] URL [local-filename][.ext]
-  wvs status [-u] [local-filename...]
-  wvs update [local-filename...]
-  wvs commit [local-filename...]
-  wvs diff [-u] [local-filename...]
-  wvs workdump [local-filename...]
+  wfo checkout [-t repo_type] URL [local-filename][.ext]
+  wfo status [-u] [local-filename...]
+  wfo update [local-filename...]
+  wfo commit [local-filename...]
+  wfo diff [-u] [local-filename...]
+  wfo workdump [local-filename...]
 
 == Authentication
 

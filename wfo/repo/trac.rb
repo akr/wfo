@@ -1,6 +1,6 @@
 require 'htree'
 
-class WVS::Trac < WVS::Repo
+class WFO::Trac < WFO::Repo
   def self.applicable?(page)
     %r{<a id="tracpowered" href="http://trac.edgewall.com/">} =~ page
   end
@@ -12,7 +12,7 @@ class WVS::Trac < WVS::Repo
   end
 
   def self.make_accessor(uri)
-    page_str, orig_charset = WVS::WebClient.read_decode(uri)
+    page_str, orig_charset = WFO::WebClient.read_decode(uri)
     page_tree = HTree(page_str)
     if page_str.last_request_uri != uri
       raise "Trac edit page redirected"
@@ -33,10 +33,10 @@ class WVS::Trac < WVS::Repo
     @form.action_uri.to_s.sub(%r{\A.*/}, '')
   end
 
-  include WVS::RepoTextArea
+  include WFO::RepoTextArea
 end
 
-def (WVS::Auth).trac_auth_handler(webclient, resp)
+def (WFO::Auth).trac_auth_handler(webclient, resp)
   uri = resp.uri
 
   unless %r{<a id="tracpowered" href="http://trac.edgewall.com/">} =~ resp.body
@@ -56,6 +56,6 @@ def (WVS::Auth).trac_auth_handler(webclient, resp)
   return nil if !trac_login_uri
   webclient.read(trac_login_uri)
 
-  return WVS::ReqHTTP.get(uri)
+  return WFO::ReqHTTP.get(uri)
 end
 

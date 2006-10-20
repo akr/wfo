@@ -1,6 +1,6 @@
 require 'htree'
 
-class WVS::Qwik < WVS::Repo
+class WFO::Qwik < WFO::Repo
   def self.applicable?(page)
     %r{>powered by <a href="http://qwik.jp/"\n>qwikWeb</a} =~ page
   end
@@ -22,7 +22,7 @@ class WVS::Qwik < WVS::Repo
   end
 
   def self.make_accessor(uri)
-    page_str, orig_charset = WVS::WebClient.read_decode(uri)
+    page_str, orig_charset = WFO::WebClient.read_decode(uri)
     page_tree = HTree(page_str)
     if page_str.last_request_uri != uri
       raise "qwikWeb edit page redirected"
@@ -43,18 +43,18 @@ class WVS::Qwik < WVS::Repo
     @form.action_uri.to_s.sub(%r{\A.*/}, '').sub(/\.save\z/, '')
   end
 
-  include WVS::RepoTextArea
+  include WFO::RepoTextArea
 end
 
-def (WVS::Auth).qwik_reqauth_checker(webclient, resp)
+def (WFO::Auth).qwik_reqauth_checker(webclient, resp)
   %r{<a href=".login"\n>Login</a\n>} =~ resp.body
 end
 
-def (WVS::Auth).qwik_auth_handler(webclient, resp)
+def (WFO::Auth).qwik_auth_handler(webclient, resp)
   qwik_auth_handler_typekey(webclient, resp)
 end
 
-def (WVS::Auth).qwik_auth_handler_typekey(webclient, resp)
+def (WFO::Auth).qwik_auth_handler_typekey(webclient, resp)
   uri = resp.uri
   unless %r{>powered by <a href="http://qwik.jp/"\n>qwikWeb</a} =~ resp.body
     return nil
@@ -63,7 +63,7 @@ def (WVS::Auth).qwik_auth_handler_typekey(webclient, resp)
     return nil
   end
   qwik_login_uri = uri + ".login"
-  resp = webclient.do_request_state(WVS::ReqHTTP.get(qwik_login_uri))
+  resp = webclient.do_request_state(WFO::ReqHTTP.get(qwik_login_uri))
   if resp.code == '200'
     qwik_typekey_uri = nil
     HTree(resp.body).traverse_element("{http://www.w3.org/1999/xhtml}a") {|e|
@@ -80,19 +80,19 @@ def (WVS::Auth).qwik_auth_handler_typekey(webclient, resp)
     return nil
   end
 
-  resp = webclient.do_request_state(WVS::ReqHTTP.get(qwik_typekey_uri))
+  resp = webclient.do_request_state(WFO::ReqHTTP.get(qwik_typekey_uri))
   return nil if resp.code != '302'
   typekey_uri = URI(resp['Location'])
 
-  resp = WVS::Auth.typekey_login(webclient, typekey_uri)
+  resp = WFO::Auth.typekey_login(webclient, typekey_uri)
 
   if resp.code == '302' # codeblog
     codeblog_uri = URI(resp['Location'])
-    resp = webclient.do_request_state(WVS::ReqHTTP.get(codeblog_uri))
+    resp = webclient.do_request_state(WFO::ReqHTTP.get(codeblog_uri))
   end
 
   return nil if resp.code != '200'
 
-  return WVS::ReqHTTP.get(uri)
+  return WFO::ReqHTTP.get(uri)
 end
 

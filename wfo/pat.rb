@@ -1,7 +1,7 @@
-module WVS
+module WFO
 end
 
-module WVS::Pat
+module WFO::Pat
   # RFC 2616
   HTTP_Token = /[!#-'*+\-.0-9A-Z^-z|~]*/n
   HTTP_QuotedString = /"((?:[\t\r\n !#-\[\]-~]|\\[\000-\177])*)"/n
