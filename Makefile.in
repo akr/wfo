@@ -10,6 +10,3 @@ bin/wvs : bin/wvs.in $(wildcard *.rb wvs/*.rb wvs/repo/*.rb) $(srcdir)/Makefile
 
 install : bin/wvs
 	install --mode=755 -D bin/wvs $(bindir)/wvs
-
-		
-
