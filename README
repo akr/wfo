@@ -24,6 +24,10 @@ GPL
 * ruby-1.8.3
 * htree-0.4
 
+== Download
+
+  % svn co svn://svn@rx1620.fsij.org/akr/wvs/trunk wvs
+
 == Install
 
   % ./configure
