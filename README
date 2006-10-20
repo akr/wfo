@@ -37,7 +37,7 @@ GPL
 
 configure option:
 
-  --prefix=PREFIX         install architecture-independent files in PREFIX
+  --prefix=PREFIX         install files in PREFIX
   --with-ruby=PATHNAME    use ruby interpreter specified by PATHNAME
 
 == Usage
