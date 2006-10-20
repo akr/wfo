@@ -45,5 +45,34 @@ class WVS::Repo
     c, stable_uri = find_class_and_stable_uri(url, type)
     return c.make_accessor(stable_uri)
   end
-
 end
+
+module WVS::RepoTextArea
+  def initialize(form, uri, textarea_name, submit_name)
+    @form = form
+    @uri = uri
+    @textarea_name = textarea_name
+    @submit_name = submit_name
+  end
+  attr_reader :form, :textarea_name
+
+  def current_text
+    @form.fetch(@textarea_name).dup
+  end
+
+  def replace_text(text)
+    @form.set(@textarea_name, text)
+  end
+
+  def commit
+    req = @form.make_request(@submit_name)
+    resp = WVS::WebClient.do_request(req)
+    return if resp.code == '200'
+    raise "HTTP POST error: #{resp.code} #{resp.message}"
+  end
+
+  def reload
+    self.class.make_accessor(@uri)
+  end
+end
+
