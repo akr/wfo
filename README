@@ -6,7 +6,7 @@ Tanaka Akira <akr@fsij.org>
 
 == License
 
-Ruby's (the dual license with GPL and the other)
+GPL
 
 == Feature
 
@@ -14,7 +14,7 @@ Ruby's (the dual license with GPL and the other)
 * edit the file
 * update the file
 * commit the file to the wiki
-* support several kinds of wiki and blog.
+* supported wiki and blog systems:
   * qwikWeb
   * Trac's wiki
   * tDiary
@@ -25,3 +25,30 @@ Ruby's (the dual license with GPL and the other)
 * htree-0.4
 
 == Install
+
+  % ./configure
+  % make
+  % make install
+
+configure option:
+
+  --prefix=PREFIX         install architecture-independent files in PREFIX
+  --with-ruby=PATHNAME    use ruby interpreter specified by PATHNAME
+
+== Usage
+
+  wvs checkout [-t repo_type] URL [local-filename][.ext]
+  wvs status [-u] [local-filename...]
+  wvs update [local-filename...]
+  wvs commit [local-filename...]
+  wvs diff [-u] [local-filename...]
+  wvs workdump [local-filename...]
+
+== Authentication
+
+  % mkdir ~/.keyring
+  % cd ~/.keyring
+
+  * TypeKey
+    % echo typekey-username typekey-password | gpg --comment TypeKey -e -a --default-recipient-self > typekey.asc
+
