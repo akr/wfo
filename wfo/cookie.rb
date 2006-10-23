@@ -31,7 +31,7 @@ class WFO::Cookie
     @request_uri = request_uri
     @pairs = pairs
     pair = @pairs.find {|k, v| /\Adomain\z/i =~ k }
-    if !pair
+    if !pair || /\A\d+(?:\.\d+)+\z/ =~ request_uri.host
       @domain = request_uri.host
       @domain_pat = /\A#{Regexp.quote @domain}\z/i
     else
