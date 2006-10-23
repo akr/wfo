@@ -33,7 +33,7 @@ class WFO::Cookie
     pair = @pairs.find {|k, v| /\Adomain\z/i =~ k }
     if !pair
       @domain = request_uri.host
-      @domain_pat = /\A#{Regexp.quote @domain}\z/
+      @domain_pat = /\A#{Regexp.quote @domain}\z/i
     else
       cookie_domain = pair[1]
       if /\A\./ !~ cookie_domain
@@ -46,7 +46,7 @@ class WFO::Cookie
         raise ArgumentError, "An cookie domain is not match: #{cookie_domain} is not suffix of #{request_uri.host}"
       end
       @domain = cookie_domain
-      @domain_pat = /#{Regexp.quote cookie_domain}\z/
+      @domain_pat = /#{Regexp.quote cookie_domain}\z/i
     end
     pair = @pairs.find {|k, v| /\Apath\z/i =~ k }
     if !pair
