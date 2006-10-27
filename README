@@ -22,8 +22,8 @@ GPL
 
 == Requirements
 
-* ruby-1.8.3
-* htree-0.4
+* ruby 1.8.3 : http://www.ruby-lang.org/
+* htree 0.4 : http://raa.ruby-lang.org/project/htree/
 
 == Download
 
