@@ -7,9 +7,7 @@
 #   wfo workdump [local-filename...]
 
 require 'mconv'
-require 'wfo/locale'
-
-Mconv.setup(WFO.locale_charset)
+Mconv.setup_locale_charset
 
 require 'optparse'
 require 'open-uri'

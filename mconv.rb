@@ -31,6 +31,39 @@ module Mconv
     raise "unknown $KCODE: #{$KCODE.inspect}"
   end
 
+  def Mconv.setup_locale_charset
+    Mconv.setup(Mconv.locale_charset)
+  end
+
+  def Mconv.locale_charset
+    codeset = Mconv.locale_codeset
+    case codeset
+    when /\A(?:euc-jp|eucjp|ujis)\z/i
+      'euc-jp'
+    when /\A(?:euc-kr|euckr)\z/i
+      'euc-kr'
+    when /\A(?:shift_jis|sjis)\z/i
+      'shift_jis'
+    when /\A(?:utf-8|utf8)\z/i
+      'utf-8'
+    when /\A(?:iso-8859-1|iso8859-1|us-ascii|ANSI_X3.4-1968)\z/i
+      'iso-8859-1'
+    else
+      'utf-8'
+    end
+  end
+
+
+  def Mconv.locale_codeset
+    codeset = `locale charmap`.chomp
+    status = $?
+    if status.to_i == 0 && !codeset.empty?
+      codeset
+    else
+      nil
+    end
+  end
+
   def Mconv.internal_mime_charset
     @internal_mime_charset.dup
   end
