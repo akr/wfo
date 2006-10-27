@@ -53,7 +53,6 @@ module Mconv
     end
   end
 
-
   def Mconv.locale_codeset
     codeset = `locale charmap`.chomp
     status = $?
