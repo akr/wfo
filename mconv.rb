@@ -198,6 +198,15 @@ class String
     Iconv.conv(charset, Mconv.internal_mime_charset, self)
   end
 
+  def encode_charset_exactly(charset)
+    result = Iconv.conv(charset, Mconv.internal_mime_charset, self)
+    round_trip = Iconv.conv(Mconv.internal_mime_charset, charset, result)
+    if self != round_trip
+      raise ArgumentError, "not round trip"
+    end
+    result
+  end
+
   def guess_charset
     Mconv.guess_charset(self)
   end

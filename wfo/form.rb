@@ -236,7 +236,7 @@ class WFO::Form
     charset = accept_charset.shift
     begin
       encoded_successful = successful.map {|name, value|
-        [name.encode_charset_exc(charset), value.encode_charset_exc(charset)]
+        [name.encode_charset_exactly(charset), value.encode_charset_exactly(charset)]
       }
     rescue Iconv::Failure
       if charset = accept_charset.shift
