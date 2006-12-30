@@ -61,7 +61,7 @@ module WFO
 
   def do_checkout(argv)
     opt = OptionParser.new
-    opt.banner = 'Usage: wfo checkout [-t repo_type] URL [local-filename]'
+    opt.banner = 'Usage: wfo checkout [-t repo_type] URL [local-filename][.ext]'
     opt_t = nil; opt.def_option('-t repo_type', "repository type (#{Repo.available_types})") {|v|
       opt_t = v
     }
