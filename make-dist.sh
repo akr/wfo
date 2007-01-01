@@ -1,5 +1,7 @@
 #!/bin/sh
 
+tar_opts="--owner 0 --group 0"
+
 version="`cat VERSION`" &&
 tmpdir="/tmp/wfo-dist-$$" &&
 mkdir $tmpdir &&
@@ -11,7 +13,7 @@ mkdir $tmpdir &&
 ) &&
 (
   cd $tmpdir &&
-  tar cvf - "wfo-$version"
+  tar cvf - $tar_opts "wfo-$version"
 ) > "wfo-$version".tar &&
 gzip -9 "wfo-$version".tar &&
 rm -rf $tmpdir
