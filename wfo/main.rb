@@ -75,6 +75,7 @@ module WFO
   def do_help(status)
     puts <<'End'
 usage:
+  wfo help
   wfo checkout [-t repo_type] URL [local-filename][.ext]
   wfo status [-u] [local-filename...]
   wfo update [local-filename...]
