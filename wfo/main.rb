@@ -16,14 +16,6 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-# usage:
-#   wfo checkout [-t repo_type] URL [local-filename][.ext]
-#   wfo status [-u] [local-filename...]
-#   wfo update [local-filename...]
-#   wfo commit [local-filename...]
-#   wfo diff [-u] [local-filename...]
-#   wfo workdump [local-filename...]
-
 require 'mconv'
 Mconv.setup_locale_charset
 
@@ -60,6 +52,8 @@ module WFO
   def main
     subcommand = ARGV.shift
     case subcommand
+    when 'help', '-h'
+      do_help(true)
     when 'checkout', 'co'
       do_checkout ARGV
     when 'status', 'stat', 'st'
@@ -73,8 +67,22 @@ module WFO
     when 'workdump'
       do_workdump ARGV
     else
-      err "unknown subcommand : #{subcommand}"
+      puts "unknown subcommand : #{subcommand}"
+      do_help(false)
     end
+  end
+
+  def do_help(status)
+    puts <<'End'
+usage:
+  wfo checkout [-t repo_type] URL [local-filename][.ext]
+  wfo status [-u] [local-filename...]
+  wfo update [local-filename...]
+  wfo commit [local-filename...]
+  wfo diff [-u] [local-filename...]
+  wfo workdump [local-filename...]
+End
+    exit status
   end
 
   def do_checkout(argv)
