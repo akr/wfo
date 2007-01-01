@@ -8,6 +8,8 @@ Tanaka Akira <akr@fsij.org>
 
 GPLv2 or later
 
+(escape.rb, keyring.rb, mconv.rb and vanish.rb is the modified BSD.)
+
 == Feature
 
 * checkout a wiki page as a local file
