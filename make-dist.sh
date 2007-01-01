@@ -5,7 +5,7 @@ tmpdir="/tmp/wfo-dist-$$" &&
 mkdir $tmpdir &&
 (
   cd $tmpdir &&
-  svn co svn://svn@rx1620.fsij.org/akr/wfo/tags/"wfo-$version" &&
+  svn export svn://svn@rx1620.fsij.org/akr/wfo/tags/"wfo-$version" &&
   cd "wfo-$version" &&
   autoconf
 ) &&
