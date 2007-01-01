@@ -51,11 +51,25 @@ configure option:
   wfo diff [-u] [local-filename...]
   wfo workdump [local-filename...]
 
+== Example
+
+  % wfo co http://qwik.jp/SandBox.html
+  % vi SandBox.txt
+  % wfo ci SandBox.txt
+
 == Authentication
 
   % mkdir ~/.keyring
   % cd ~/.keyring
 
   * TypeKey
-    % echo typekey-username typekey-password | gpg --comment TypeKey -e -a --default-recipient-self > typekey.asc
 
+      % echo TypeKey typekey-username typekey-password |
+        gpg --comment TypeKey -e -a --default-recipient-self > typekey.asc
+
+  * HTTP Basic Authentication
+
+      % echo 'canonical-root-url basic "realm" username password' |
+        gpg --comment 'canonical-root-url basic "realm"' -e -a --default-recipient-self > service.asc
+
+See keyring.rb for more information.
