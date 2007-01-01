@@ -28,3 +28,6 @@ bin/wfo : bin/wfo.in $(wildcard *.rb wfo/*.rb wfo/repo/*.rb) $(srcdir)/Makefile
 
 install : bin/wfo
 	install --mode=755 -D bin/wfo $(bindir)/wfo
+
+dist :
+	./make-dist.sh
