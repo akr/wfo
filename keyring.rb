@@ -24,6 +24,12 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 # OF SUCH DAMAGE.
 
+require 'vanish'
+require 'pathname'
+require 'digest/sha2'
+require 'escape'
+autoload :Etc, 'etc'
+
 # = keyring - manage authentication information in encrypted form.
 #
 # The keyring library stores authentication information such as username and
@@ -46,7 +52,7 @@
 # ~/.keyring/foobar.asc :
 #   -----BEGIN PGP MESSAGE-----
 #   Version: GnuPG v1.4.5 (GNU/Linux)
-#   Comment: non-encrypted-prefix
+#   Comment: non-encrypted-prefix-of-the-strings
 #
 #   ... encrypted-sequence-of-strings ...
 #   -----END PGP MESSAGE-----
@@ -56,10 +62,10 @@
 # The following example stores a username and password for TypeKey.
 # <http://www.sixapart.jp/typekey/>
 #
-# % mkdir ~/.keyring
-# % cd ~/.keyring
-# % echo TypeKey typekey-username typekey-password |
-#   gpg --comment TypeKey -e -a --default-recipient-self > typekey.asc
+#  % mkdir ~/.keyring
+#  % cd ~/.keyring
+#  % echo TypeKey typekey-username typekey-password |
+#    gpg --comment TypeKey -e -a --default-recipient-self > typekey.asc
 #
 # It creates a file ~/.keyring/typekey.asc as follows.
 #
@@ -77,8 +83,8 @@
 #
 # === Example 2.  HTTP Basic Authentication
 #
-# % echo http://www.member.org basic "realm" username password |
-#   gpg --comment 'http://www.example.org basic "realm" username' -e -a --default-recipient-self > example-org.asc
+#  % echo http://www.example.org basic "realm" username password |
+#    gpg --comment 'http://www.example.org basic "realm" username' -e -a --default-recipient-self > example-org.asc
 #
 # It creates a file ~/.keyring/example-org.asc as follows.
 #
@@ -192,12 +198,6 @@
 # * HTTP Basic Authentication
 #   % echo 'canonical-root-url basic "realm" username password' |
 #     gpg --comment 'canonical-root-url basic "realm"' -e -a --default-recipient-self > service.asc
-
-require 'vanish'
-require 'pathname'
-require 'digest/sha2'
-require 'escape'
-autoload :Etc, 'etc'
 
 class KeyRing
   def self.with_authinfo(protection_domain, &block)
