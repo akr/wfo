@@ -210,6 +210,8 @@ class KeyRing
     self.new.with_authinfo(protection_domain, &block)
   end
 
+  # :stopdoc:
+
   def self.decrypt_file(path)
     `#{Escape.shell_command(%W[gpg -d -q #{path}])}`
   end
@@ -269,6 +271,9 @@ class KeyRing
     }
     raise AuthInfoNotFound, "authentication information not found in #{@dir}: #{KeyRing.encode_strings protection_domain}" 
   end
+
+  # :startdoc:
+
   class AuthInfoNotFound < StandardError
   end
 
@@ -286,6 +291,8 @@ class KeyRing
     uri.fragment = nil
     [uri.to_s, scheme, realm]
   end
+
+  # :stopdoc:
 
   def self.encode_strings(strings)
     strings.map {|s|
@@ -400,4 +407,5 @@ class KeyRing
     end
   end
 
+  # :startdoc:
 end
