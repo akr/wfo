@@ -192,12 +192,14 @@ autoload :Etc, 'etc'
 #
 #
 # * TypeKey
-#   % echo TypeKey typekey-username typekey-password |
-#     gpg --comment TypeKey -e -a --default-recipient-self > typekey.asc
+#
+#    % echo TypeKey typekey-username typekey-password |
+#      gpg --comment TypeKey -e -a --default-recipient-self > typekey.asc
 #
 # * HTTP Basic Authentication
-#   % echo 'canonical-root-url basic "realm" username password' |
-#     gpg --comment 'canonical-root-url basic "realm"' -e -a --default-recipient-self > service.asc
+#
+#    % echo 'canonical-root-url basic "realm" username password' |
+#      gpg --comment 'canonical-root-url basic "realm"' -e -a --default-recipient-self > service.asc
 
 class KeyRing
   def self.with_authinfo(protection_domain, &block)
