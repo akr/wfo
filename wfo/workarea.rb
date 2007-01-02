@@ -46,7 +46,7 @@ class WFO::WorkArea
       @info['textarea_name'] = textarea_name
     else
       raise "not exists : #{@info_path}" if !@info_path.exist?
-      Zlib::GzipReader.open(@info_path) {|f|
+      Zlib::GzipReader.open(@info_path.to_s) {|f|
         @info = Marshal.load(f)
       }
       @url = @info['URL']
@@ -65,7 +65,7 @@ class WFO::WorkArea
 
   def store_info
     @info_path.dirname.mkpath
-    Zlib::GzipWriter.open(@info_path) {|f|
+    Zlib::GzipWriter.open(@info_path.to_s) {|f|
       Marshal.dump(@info, f)
     }
   end
