@@ -30,7 +30,7 @@ require 'digest/sha2'
 require 'escape'
 autoload :Etc, 'etc'
 
-# = keyring - manage authentication information in encrypted form.
+# = keyring - manage encrypted storage for authentication information
 #
 # The keyring library stores authentication information such as username and
 # passwords in a keyring directory in encrypted form.
@@ -161,48 +161,52 @@ autoload :Etc, 'etc'
 # * A white space is one of space, tab, newline, carriage return, form feed.
 #   /\s/
 #
-# === Method
-#
-# * KeyRing.with_authinfo(protection_domain) {|authentication_info| ... }
-#
-#   KeyRing.with_authinfo takes one or more strings as the argument.
-#   protection_domain can be a string or an array of strings.
-#
-#   protection_domain is compared to the Comment fields in ~/.keyring/*.asc.
-#   If a matched Comment field is found, the corresponding file is decrypted to obtain
-#   the authentication information represented as a sequence of strings using gpg.
-#
-#   KeyRing.with_authinfo yields the sequence of strings excluded with
-#   beginning words given with protection_domain.
-#
-#   Note that gpg may ask you a passphrase of your key.
-#
-# * KeyRing.typekey_protection_domain
-#
-#   KeyRing.typekey_protection_domain returns ["TypeKey"].
-#
-# * KeyRing.http_protection_domain(uri, scheme, realm)
-#
-#   KeyRing.http_protection_domain returns [canonical-root-URL-of-given-uri, scheme, realm]
-#
 # == Convention of Authentication Information
 #
 # Although the keyring library itself doesn't define the semantics of the sequence of strings, 
-# it is desirable to 
+# it is useful to standardize the usage of the strings.
 #
+# So the keyring library provides convenience methods to make protection domains
+# for TypeKey and HTTP Authentication.
+# They returns a protection domain appropriate for an argument of KeyRing.with_authinfo.
 #
-# * TypeKey
+# * KeyRing.typekey_protection_domain
+#
+#   For TypeKey authentication, protection domain is ["TypeKey"].
+#   The authentication information, username and password, can be stored as follows.
 #
 #    % echo TypeKey typekey-username typekey-password |
 #      gpg --comment TypeKey -e -a --default-recipient-self > typekey.asc
 #
-# * HTTP Basic Authentication
+# * KeyRing.http_protection_domain(uri, scheme, realm)
+#
+#   For HTTP authentication, protection domain is [canonical-root-URL, scheme, realm].
+#   In Basic authentication, "basic" is used for the scheme.
+#
+#   The Basic authentication information, username and password, can be stored as follows.
 #
 #    % echo 'canonical-root-url basic "realm" username password' |
-#      gpg --comment 'canonical-root-url basic "realm"' -e -a --default-recipient-self > service.asc
+#      gpg --comment 'canonical-root-URL basic "realm"' -e -a --default-recipient-self > service.asc
+#
+# === Method
+#
+# * KeyRing.with_authinfo(protection_domain) {|authentication_informaion| ... }
+# * KeyRing.typekey_protection_domain
+# * KeyRing.http_protection_domain(uri, scheme, realm)
+#
 
 class KeyRing
-  def self.with_authinfo(protection_domain, &block)
+  # KeyRing.with_authinfo takes one or more strings as the argument.
+  # protection_domain can be a string or an array of strings.
+  #
+  # protection_domain is compared to the Comment fields in ~/.keyring/*.asc.
+  # If a matched Comment field is found, the corresponding file is decrypted to obtain
+  # the authentication information represented as a sequence of strings using gpg.
+  #
+  # KeyRing.with_authinfo yields the sequence of strings excluded with
+  # beginning words given with protection_domain.
+  #
+  def self.with_authinfo(protection_domain, &block) # :yields: authentication_information
     self.new.with_authinfo(protection_domain, &block)
   end
 
@@ -268,10 +272,12 @@ class KeyRing
   class AuthInfoNotFound < StandardError
   end
 
+  # KeyRing.typekey_protection_domain returns ["TypeKey"].
   def self.typekey_protection_domain
     ["TypeKey"]
   end
 
+  # KeyRing.http_protection_domain returns [canonical-root-URL-of-given-uri, scheme, realm]
   def self.http_protection_domain(uri, scheme, realm)
     uri = uri.dup
     # make it canonical root URL
