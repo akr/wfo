@@ -143,7 +143,7 @@ module WFO
     KeyRing.with_authinfo(protection_domain) {|username, password|
       user_pass = "#{username}:#{password}"
       credential = [user_pass].pack("m")
-      user_pass.vanish!
+      KeyRing.vanish!(user_pass)
       credential.gsub!(/\s+/, '')
       path_pat = /\A#{uri.path.sub(%r{[^/]*\z}, '')}/
       webclient.add_basic_credential(canonical_root_url, realm, path_pat, credential)

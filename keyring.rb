@@ -24,7 +24,6 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 # OF SUCH DAMAGE.
 
-require 'vanish'
 require 'pathname'
 require 'digest/sha2'
 require 'escape'
@@ -229,22 +228,22 @@ class KeyRing
     path = search_encrypted_file(protection_domain)
     s = KeyRing.decrypt_file(path)
     if $? != 0
-      s.vanish!
+      KeyRing.vanish!(s)
       raise AuthInfoNotFound, "gpg failed with #{$?}"
     end
     begin
       authinfo = KeyRing.decode_strings_safe(s)
-      s.vanish!
+      KeyRing.vanish!(s)
       s = nil
       if protection_domain.length <= authinfo.length &&
          authinfo[0, protection_domain.length] == protection_domain
-        authinfo[0, protection_domain.length].each {|v| v.vanish! }
+        authinfo[0, protection_domain.length].each {|v| KeyRing.vanish!(v) }
         authinfo[0, protection_domain.length] = []
       end
       ret = yield *authinfo
     ensure
-      s.vanish! if s
-      authinfo.each {|v| v.vanish! } if authinfo
+      KeyRing.vanish!(s) if s
+      authinfo.each {|v| KeyRing.vanish!(v) } if authinfo
     end
     ret
   end
@@ -403,8 +402,15 @@ class KeyRing
     r
   ensure
     if $!
-      r.each {|s| s.vanish! }
+      r.each {|s| KeyRing.vanish!(s) }
     end
+  end
+
+  def self.vanish!(s)
+    0.upto(s.length-1) {|i|
+    s[i] = ?\0
+    }
+    s.replace ""
   end
 
   # :startdoc:

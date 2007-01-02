@@ -16,7 +16,6 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-require 'vanish'
 require 'escape'
 require 'net/https'
 
@@ -219,7 +218,7 @@ class WFO::Form
         yield req
       ensure
         secrets.each {|s|
-          s.vanish!
+          KeyRing.vanish!(s)
         }
       end
     else
