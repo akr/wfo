@@ -54,9 +54,14 @@ configure option:
 
 == Example
 
+You can edit "SandBox" page on qwik.jp as follows.
+
   % wfo co http://qwik.jp/SandBox.html
   % vi SandBox.txt
   % wfo ci SandBox.txt
+
+Note that you needs TypeKey account.
+TypeKey username and password should be stored in ~/.keyring/.
 
 == Authentication
 
