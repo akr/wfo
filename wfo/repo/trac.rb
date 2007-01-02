@@ -54,26 +54,27 @@ class WFO::Trac < WFO::Repo
   include WFO::RepoTextArea
 end
 
-def (WFO::Auth).trac_auth_handler(webclient, resp)
-  uri = resp.uri
+module WFO::Auth
+  def self.trac_auth_handler(webclient, resp)
+    uri = resp.uri
 
-  unless %r{<a id="tracpowered" href="http://trac.edgewall.com/">} =~ resp.body
-    return nil
-  end
-  if resp.code != '403'
-    return nil
-  end
-
-  trac_login_uri = nil
-  HTree(resp.body).traverse_element("{http://www.w3.org/1999/xhtml}a") {|e|
-    if e.extract_text.to_s == "Login"
-      trac_login_uri = uri + e.get_attr('href')
-      break
+    unless %r{<a id="tracpowered" href="http://trac.edgewall.com/">} =~ resp.body
+      return nil
     end
-  }
-  return nil if !trac_login_uri
-  webclient.read(trac_login_uri)
+    if resp.code != '403'
+      return nil
+    end
 
-  return WFO::ReqHTTP.get(uri)
+    trac_login_uri = nil
+    HTree(resp.body).traverse_element("{http://www.w3.org/1999/xhtml}a") {|e|
+      if e.extract_text.to_s == "Login"
+        trac_login_uri = uri + e.get_attr('href')
+        break
+      end
+    }
+    return nil if !trac_login_uri
+    webclient.read(trac_login_uri)
+
+    return WFO::ReqHTTP.get(uri)
+  end
 end
-
