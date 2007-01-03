@@ -34,7 +34,7 @@ module Escape
   # Escape.shell_command composes
   # a sequence of words to
   # a single shell command line.
-  # All shell meta characters are escaped and
+  # All shell meta characters are quoted and
   # the words are concatenated with interleaving space.
   #
   #  Escape.shell_command(["ls", "/"]) #=> "ls /"
@@ -53,7 +53,7 @@ module Escape
     command.map {|word| shell_single_word(word) }.join(' ')
   end
 
-  # Escape.shell_single_word escapes shell meta characters.
+  # Escape.shell_single_word quotes shell meta characters.
   #
   # The result string is always single shell word, even if
   # the argument is "".
@@ -80,7 +80,7 @@ module Escape
     end
   end
 
-  # Escape.uri_segment escapes URI segment.
+  # Escape.uri_segment escapes URI segment using percent-encoding.
   #
   #  Escape.uri_segment("a/b") #=> "a%2Fb"
   #
@@ -98,7 +98,7 @@ module Escape
     }
   end
 
-  # Escape.uri_path escapes URI path.
+  # Escape.uri_path escapes URI path using percent-encoding.
   # The given path should be a sequence of (non-escaped) segments separated by "/".
   # The segments cannot contains "/".
   #
@@ -203,7 +203,7 @@ module Escape
   }
   # :startdoc:
 
-  # Escape.html_text escapes a string appropriate for HTML text.
+  # Escape.html_text escapes a string appropriate for HTML text using character references.
   #
   # It escapes 3 characters:
   # * '&' to '&amp;'
@@ -242,7 +242,7 @@ module Escape
     str.gsub(/[&<>"]/) {|ch| HTML_ATTR_ESCAPE_HASH[ch] }
   end
 
-  # Escape.html_attr encodes a string as a double-quoted HTML attribute.
+  # Escape.html_attr encodes a string as a double-quoted HTML attribute using character references.
   #
   #  Escape.html_attr("abc") #=> "\"abc\""
   #  Escape.html_attr("a&b") #=> "\"a&amp;b\""
