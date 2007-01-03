@@ -24,13 +24,44 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 # OF SUCH DAMAGE.
 
+# Escape module provides several escape functions.
+# * URI
+# * HTML
+# * shell command
 module Escape
   module_function
 
+  # Escape.shell_command composes
+  # a sequence of words to
+  # a single shell command line.
+  # All shell meta characters are escaped and
+  # the words are concatenated with interleaving space.
+  #
+  #  Escape.shell_command(["ls", "/"]) #=> "ls /"
+  #  Escape.shell_command(["echo", "*"]) #=> "echo '*'"
+  #
+  # Note that system(*command) and
+  # system(Escape.shell_command(command)) is roughly same.
+  # There are two exception as follows.
+  # * The first is that the later may invokes /bin/sh.
+  # * The second is an interpretation of an array with only one element: 
+  #   the element is parsed by the shell with the former but
+  #   it is recognized as single word with the later.
+  #   For example, system(*["echo foo"]) invokes echo command with an argument "foo".
+  #   But system(Escape.shell_command(["echo foo"])) invokes "echo foo" command without arguments (and it probably fails).
   def shell_command(command)
     command.map {|word| shell_single_word(word) }.join(' ')
   end
 
+  # Escape.shell_single_word escapes shell meta characters.
+  #
+  # The result string is always single shell word, even if
+  # the argument is "".
+  # Escape.shell_single_word("") returns "''".
+  #
+  #  Escape.shell_single_word("") #=> "''"
+  #  Escape.shell_single_word("foo") #=> "foo"
+  #  Escape.shell_single_word("*") #=> "'*'"
   def shell_single_word(str)
     if str.empty?
       "''"
@@ -49,6 +80,15 @@ module Escape
     end
   end
 
+  # Escape.uri_segment escapes URI segment.
+  #
+  #  Escape.uri_segment("a/b") #=> "a%2Fb"
+  #
+  # The segment is "/"-splitted element after authority before query in URI, as follows.
+  #
+  #   scheme://authority/segment1/segment2/.../segmentN?query#fragment
+  #
+  # See RFC 3986 for details of URI.
   def uri_segment(str)
     # pchar - pct-encoded = unreserved / sub-delims / ":" / "@"
     # unreserved = ALPHA / DIGIT / "-" / "." / "_" / "~"
@@ -58,10 +98,25 @@ module Escape
     }
   end
 
+  # Escape.uri_path escapes URI path.
+  # The given path should be a sequence of (non-escaped) segments separated by "/".
+  # The segments cannot contains "/".
+  #
+  #  Escape.uri_path("a/b/c") #=> "a/b/c"
+  #  Escape.uri_path("a?b/c?d/e?f") #=> "a%3Fb/c%3Fd/e%3Ff"
+  #
+  # The path is the part after authority before query in URI, as follows.
+  #
+  #   scheme://authority/path#fragment
+  #
+  # See RFC 3986 for details of URI.
+  #
+  # Note that this function is not appropriate to convert OS path to URI.
   def uri_path(str)
     str.gsub(%r{[^/]+}n) { uri_segment($&) }
   end
 
+  # :stopdoc:
   def html_form_fast(pairs, sep=';')
     pairs.map {|k, v|
       # query-chars - pct-encoded - x-www-form-urlencoded-delimiters =
@@ -80,7 +135,32 @@ module Escape
       "#{k}=#{v}"
     }.join(sep)
   end
+  # :startdoc:
 
+  # Escape.html_form composes HTML form key-value pairs as a x-www-form-urlencoded encoded string.
+  #
+  # Escape.html_form takes an array of pair of strings or
+  # an hash from string to string.
+  #
+  #  Escape.html_form([["a","b"], ["c","d"]]) #=> "a=b&c=d"
+  #  Escape.html_form({"a"=>"b", "c"=>"d"}) #=> "a=b&c=d"
+  #
+  # In the array form, it is possible to use same key more than once.
+  # (It is required for a HTML form which contains
+  # checkboxes and select element with multiple attribute.)
+  #
+  #  Escape.html_form([["k","1"], ["k","2"]]) #=> "k=1&k=2"
+  #
+  # If the strings contains characters which must be escaped in x-www-form-urlencoded,
+  # they are escaped using %-encoding.
+  #
+  #  Escape.html_form([["k=","&;="]]) #=> "k%3D=%26%3B%3D"
+  #
+  # The separator can be specified by the optional second argument.
+  #
+  #  Escape.html_form([["a","b"], ["c","d"]], ";") #=> "a=b;c=d"
+  #
+  # See HTML 4.01 for details.
   def html_form(pairs, sep='&')
     r = ''
     first = true
@@ -115,23 +195,59 @@ module Escape
     r
   end
 
+  # :stopdoc:
   HTML_TEXT_ESCAPE_HASH = {
     '&' => '&amp;',
     '<' => '&lt;',
     '>' => '&gt;',
   }
+  # :startdoc:
+
+  # Escape.html_text escapes a string appropriate for HTML text.
+  #
+  # It escapes 3 characters:
+  # * '&' to '&amp;'
+  # * '<' to '&lt;'
+  # * '>' to '&gt;'
+  #
+  #  Escape.html_text("abc") #=> "abc"
+  #  Escape.html_text("a & b < c > d") #=> "a &amp; b &lt; c &gt; d"
+  #
+  # This function is not appropriate for escaping HTML element attribute
+  # because quotes are not escaped.
   def html_text(str)
     str.gsub(/[&<>]/) {|ch| HTML_TEXT_ESCAPE_HASH[ch] }
   end
 
+  # :stopdoc:
   HTML_ATTR_ESCAPE_HASH = {
     '&' => '&amp;',
     '<' => '&lt;',
     '>' => '&gt;',
     '"' => '&quot;',
   }
-  def html_attr(str)
+  # :startdoc:
+
+  # Escape.html_attribute_content escapes a string appropriate for an HTML attribute which is quoted
+  # by double-quote.
+  #
+  # It escapes 4 characters:
+  # * '&' to '&amp;'
+  # * '<' to '&lt;'
+  # * '>' to '&gt;'
+  # * '"' to '&quot;'
+  #
+  # This function is not appropriate for an attribute which is quoted by single-quote.
+  def html_attribute_content(str)
     str.gsub(/[&<>"]/) {|ch| HTML_ATTR_ESCAPE_HASH[ch] }
   end
 
+  # Escape.html_attr encodes a string as a double-quoted HTML attribute.
+  #
+  #  Escape.html_attr("abc") #=> "\"abc\""
+  #  Escape.html_attr("a&b") #=> "\"a&amp;b\""
+  #
+  def html_attr(str)
+    '"' + Escape.html_attribute_content(str) + '"'
+  end
 end
