@@ -30,7 +30,11 @@ GPLv2 or later
 
 == Download
 
-  % svn co svn://svn@rx1620.fsij.org/akr/wfo/trunk wfo
+* latest release: ((<wfo-0.1.tar.gz|URL:wfo-0.1.tar.gz>))
+
+* developpment version in Subversion repository:
+
+    % svn co svn://svn@svn.a-k-r.org/akr/wfo/trunk wfo
 
 == Install
 
