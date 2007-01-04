@@ -1,5 +1,9 @@
 = wfo - wiki frontend at offline
-
+<%
+  def version
+    File.read("VERSION").chomp
+  end
+%>
 == Author
 
 Tanaka Akira <akr@fsij.org>
@@ -30,7 +34,7 @@ GPLv2 or later
 
 == Download
 
-* latest release: ((<wfo-0.1.tar.gz|URL:wfo-0.1.tar.gz>))
+* latest release: ((<wfo-<%=version%>.tar.gz|URL:wfo-<%=version%>.tar.gz>))
 
 * developpment version in Subversion repository:
 

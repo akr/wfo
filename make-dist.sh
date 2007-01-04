@@ -7,9 +7,10 @@ tmpdir="/tmp/wfo-dist-$$" &&
 mkdir $tmpdir &&
 (
   cd $tmpdir &&
-  svn export svn://svn@rx1620.fsij.org/akr/wfo/tags/"wfo-$version" &&
+  svn export svn://svn@svn.a-k-r.org/akr/wfo/tags/"wfo-$version" &&
   cd "wfo-$version" &&
-  autoconf
+  autoconf &&
+  erb misc/README.erb > README
 ) &&
 (
   cd $tmpdir &&
