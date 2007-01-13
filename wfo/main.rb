@@ -146,7 +146,21 @@ End
     WebClient.do {
       ws = argv_to_workareas(argv)
       ws.each {|w|
-        w.update
+        r = w.update
+        case r.first
+        when :updated
+          _, filename = r
+          puts "#{filename}: updated"
+        when :conflict
+          _, filename, backup = r
+          puts "#{filename}: conflict (backup: #{backup})"
+        when :merged
+          _, filename, backup = r
+          puts "#{filename}: merged (backup: #{backup})"
+        when :already
+        else
+          raise "unexpected result: #{r.first}"
+        end
       }
     }
   end

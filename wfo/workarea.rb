@@ -160,7 +160,7 @@ class WorkArea
         self.local_text = remote_text
         self.original_text = remote_text
         self.store_info
-        puts "#{self.filename}: updated"
+        return [:updated, self.filename]
       else 
         merged, conflict = merge(local_text, original_text, remote_text)
         backup_path = self.make_backup(local_text)
@@ -168,11 +168,13 @@ class WorkArea
         self.original_text = remote_text
         self.store_info
         if conflict
-          puts "#{self.filename}: conflict (backup: #{backup_path})"
+          return [:conflict, self.filename, backup_path]
         else
-          puts "#{self.filename}: merged (backup: #{backup_path})"
+          return [:merged, self.filename, backup_path]
         end
       end
+    else
+      return [:already]
     end
 
   end
