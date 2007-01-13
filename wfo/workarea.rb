@@ -55,7 +55,7 @@ class WorkArea
     if !local_filename
       local_filename = make_local_filename(accessor.recommended_filename, extname)
     end
-    workarea = WorkArea.new(local_filename, accessor.class.type, stable_uri, accessor.form, accessor.textarea_name)
+    workarea = WorkArea.new(local_filename, accessor)
     workarea.store
     local_filename
   end
@@ -81,29 +81,35 @@ class WorkArea
     local_filename
   end
 
-  def initialize(filename, repository_type=nil, url=nil, form=nil, textarea_name=nil)
+  def initialize(filename, accessor=nil)
     @filename = Pathname.new(filename)
     @info_path = @filename.dirname + '.wfo' + "i_#{@filename.basename}.gz"
-    if url
+    if accessor
       raise "alread exists : #{@info_path}" if @info_path.exist?
-      @url = url.dup
       @info = {}
-      @info['URL'] = @url
-      @info['repository_type'] = repository_type.dup
-      @info['form'] = form
-      @info['textarea_name'] = textarea_name
+      @info['accessor'] = accessor
     else
       raise "not exists : #{@info_path}" if !@info_path.exist?
       Zlib::GzipReader.open(@info_path.to_s) {|f|
         @info = Marshal.load(f)
       }
-      @url = @info['URL']
+      if !@info['accessor']
+        @info['accessor'] = WFO::Repo.fetch_class(@info['repository_type']).make_accessor(@info['URL'])
+      end
     end
   end
-  attr_reader :filename, :url
+  attr_reader :filename
+
+  def form
+    @info['accessor'].form
+  end
+
+  def textarea_name
+    @info['accessor'].textarea_name
+  end
 
   def make_accessor
-    WFO::Repo.fetch_class(@info['repository_type']).make_accessor(@info['URL'])
+    @info['accessor']
   end
 
   def store
@@ -125,11 +131,11 @@ class WorkArea
   end
 
   def original_text
-    @info['form'].fetch(@info['textarea_name'])
+    self.form.fetch(self.textarea_name)
   end
 
   def original_text=(text)
-    @info['form'].set(@info['textarea_name'], text)
+    self.form.set(self.textarea_name, text)
   end
 
   def local_text

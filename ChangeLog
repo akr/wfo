@@ -1,8 +1,10 @@
 2007-01-13  Tanaka Akira  <akr@fsij.org>
 
-	* wfo/main.rb, wfo/workarea.rb: move checkout stuff to workarea.rb.
+	* wfo/main.rb, wfo/workarea.rb: Move checkout stuff to workarea.rb.
 
-	* wfo/main.rb, wfo/workarea.rb: move update stuff to workarea.rb.
+	* wfo/main.rb, wfo/workarea.rb: Move update stuff to workarea.rb.
+
+	* wfo/workarea.rb: Marshal an accessor object.
 
 2007-01-04  Tanaka Akira  <akr@fsij.org>
 
