@@ -146,29 +146,7 @@ End
     WebClient.do {
       ws = argv_to_workareas(argv)
       ws.each {|w|
-        accessor = w.make_accessor
-        remote_text = accessor.current_text
-        local_text = w.local_text
-        original_text = w.original_text
-        if original_text != remote_text
-          if original_text == local_text
-            w.local_text = remote_text
-            w.original_text = remote_text
-            w.store_info
-            puts "#{w.filename}: updated"
-          else
-            merged, conflict = merge(local_text, original_text, remote_text)
-            backup_path = w.make_backup(local_text)
-            w.local_text = merged
-            w.original_text = remote_text
-            w.store_info
-            if conflict
-              puts "#{w.filename}: conflict (backup: #{backup_path})"
-            else
-              puts "#{w.filename}: merged (backup: #{backup_path})"
-            end
-          end
-        end
+        w.update
       }
     }
   end

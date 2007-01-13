@@ -150,5 +150,70 @@ class WorkArea
     self.original_text != self.local_text
   end
 
+  def update
+    accessor = self.make_accessor
+    remote_text = accessor.current_text
+    local_text = self.local_text
+    original_text = self.original_text
+    if original_text != remote_text
+      if original_text == local_text
+        self.local_text = remote_text
+        self.original_text = remote_text
+        self.store_info
+        puts "#{self.filename}: updated"
+      else 
+        merged, conflict = merge(local_text, original_text, remote_text)
+        backup_path = self.make_backup(local_text)
+        self.local_text = merged
+        self.original_text = remote_text
+        self.store_info
+        if conflict
+          puts "#{self.filename}: conflict (backup: #{backup_path})"
+        else
+          puts "#{self.filename}: merged (backup: #{backup_path})"
+        end
+      end
+    end
+
+  end
+
+  def merge(local_text, original_text, remote_text)
+    original_file = tempfile("wfo.original", original_text)
+    local_file = tempfile("wfo.local", local_text)
+    remote_file = tempfile("wfo.remote", remote_text)
+    command = ['diff3', '-mE',
+      '-L', 'edited by you',
+      '-L', 'before edited',
+      '-L', 'edited by others',
+      local_file.path,
+      original_file.path,
+      remote_file.path]
+    merged = IO.popen(Escape.shell_command(command), 'r') {|f|
+      f.read
+    }
+    status = $?
+    unless status.exited?
+      raise "[bug] unexpected diff3 failure: #{status.inspect}"
+    end
+    case status.exitstatus
+    when 0
+      conflict = false
+    when 1
+      conflict = true
+    when 2
+      raise "diff3 failed"
+    else
+      raise "[bug] unexpected diff3 status: #{status.inspect}"
+    end
+    return merged, conflict
+  end
+
+  def tempfile(basename, content)
+    t = Tempfile.new(basename)
+    t.write content
+    t.flush
+    t
+  end
+
 end
 end

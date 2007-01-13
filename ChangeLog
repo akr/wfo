@@ -2,6 +2,8 @@
 
 	* wfo/main.rb, wfo/workarea.rb: move checkout stuff to workarea.rb.
 
+	* wfo/main.rb, wfo/workarea.rb: move update stuff to workarea.rb.
+
 2007-01-04  Tanaka Akira  <akr@fsij.org>
 
 	* wfo-0.1 released.
