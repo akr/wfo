@@ -97,51 +97,9 @@ End
     WebClient.do {
       url = URI(argv.shift)
       local_filename_arg = argv.shift
-      if !local_filename_arg
-        extname = '.txt'
-      elsif /^\./ =~ local_filename_arg
-        extname = local_filename_arg
-      else
-        if /\./ =~ local_filename_arg
-          local_filename = local_filename_arg
-        else
-          local_filename = local_filename_arg + '.txt'
-        end
-        if WorkArea.has?(local_filename)
-          err "local file already exists : #{local_filename.inspect}"
-        end
-      end
-      repo_class, stable_uri = Repo.find_class_and_stable_uri(url, opt_t)
-      accessor = repo_class.make_accessor(stable_uri)
-
-      if !local_filename
-        local_filename = make_local_filename(accessor.recommended_filename, extname)
-      end
-      workarea = WorkArea.new(local_filename, accessor.class.type, stable_uri, accessor.form, accessor.textarea_name)
-      workarea.store
+      local_filename = WorkArea.checkout(url, local_filename_arg, opt_t)
       puts local_filename
     }
-  end
-
-  def make_local_filename(recommended_basename, extname)
-    if %r{/} =~ recommended_basename ||
-      recommended_basename = File.basename(recommended_basename)
-    end
-    if recommended_basename.empty?
-      recommended_basename = "empty-filename"
-    end
-    tmp = "#{recommended_basename}#{extname}"
-    if !WorkArea.has?(tmp)
-      local_filename = tmp
-    else
-      n = 1
-      begin
-        tmp = "#{recommended_basename}_#{n}#{extname}"
-        n += 1
-      end while WorkArea.has?(tmp)
-      local_filename = tmp
-    end
-    local_filename
   end
 
   def do_status(argv)
