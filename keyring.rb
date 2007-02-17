@@ -212,7 +212,11 @@ class KeyRing
   # :stopdoc:
 
   def self.decrypt_file(path)
-    `#{Escape.shell_command(%W[gpg -d -q #{path}])}`
+    if ENV['GPG_AGENT_INFO']
+      `#{Escape.shell_command(%W[gpg -d -q --no-tty #{path}])}`
+    else
+      `#{Escape.shell_command(%W[gpg -d -q #{path}])}`
+    end
   end
 
   def initialize(dir=nil)
