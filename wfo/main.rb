@@ -97,9 +97,51 @@ End
     WebClient.do {
       url = URI(argv.shift)
       local_filename_arg = argv.shift
-      local_filename = WorkArea.checkout(url, local_filename_arg, opt_t)
+      if !local_filename_arg
+        extname = '.txt'
+      elsif /^\./ =~ local_filename_arg
+        extname = local_filename_arg
+      else
+        if /\./ =~ local_filename_arg
+          local_filename = local_filename_arg
+        else
+          local_filename = local_filename_arg + '.txt'
+        end
+        if WorkArea.has?(local_filename)
+          err "local file already exists : #{local_filename.inspect}"
+        end
+      end
+      repo_class, stable_uri = Repo.find_class_and_stable_uri(url, opt_t)
+      accessor = repo_class.make_accessor(stable_uri)
+
+      if !local_filename
+        local_filename = make_local_filename(accessor.recommended_filename, extname)
+      end
+      workarea = WorkArea.new(local_filename, accessor.class.type, stable_uri, accessor.form, accessor.textarea_name)
+      workarea.store
       puts local_filename
     }
+  end
+
+  def make_local_filename(recommended_basename, extname)
+    if %r{/} =~ recommended_basename ||
+      recommended_basename = File.basename(recommended_basename)
+    end
+    if recommended_basename.empty?
+      recommended_basename = "empty-filename"
+    end
+    tmp = "#{recommended_basename}#{extname}"
+    if !WorkArea.has?(tmp)
+      local_filename = tmp
+    else
+      n = 1
+      begin
+        tmp = "#{recommended_basename}_#{n}#{extname}"
+        n += 1
+      end while WorkArea.has?(tmp)
+      local_filename = tmp
+    end
+    local_filename
   end
 
   def do_status(argv)
@@ -146,20 +188,28 @@ End
     WebClient.do {
       ws = argv_to_workareas(argv)
       ws.each {|w|
-        r = w.update
-        case r.first
-        when :updated
-          _, filename = r
-          puts "#{filename}: updated"
-        when :conflict
-          _, filename, backup = r
-          puts "#{filename}: conflict (backup: #{backup})"
-        when :merged
-          _, filename, backup = r
-          puts "#{filename}: merged (backup: #{backup})"
-        when :already
-        else
-          raise "unexpected result: #{r.first}"
+        accessor = w.make_accessor
+        remote_text = accessor.current_text
+        local_text = w.local_text
+        original_text = w.original_text
+        if original_text != remote_text
+          if original_text == local_text
+            w.local_text = remote_text
+            w.original_text = remote_text
+            w.store_info
+            puts "#{w.filename}: updated"
+          else
+            merged, conflict = merge(local_text, original_text, remote_text)
+            backup_path = w.make_backup(local_text)
+            w.local_text = merged
+            w.original_text = remote_text
+            w.store_info
+            if conflict
+              puts "#{w.filename}: conflict (backup: #{backup_path})"
+            else
+              puts "#{w.filename}: merged (backup: #{backup_path})"
+            end
+          end
         end
       }
     }
