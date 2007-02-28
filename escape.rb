@@ -1,6 +1,6 @@
 # escape.rb - escape/unescape library for several formats
 #
-# Copyright (C) 2006 Tanaka Akira  <akr@fsij.org>
+# Copyright (C) 2006,2007 Tanaka Akira  <akr@fsij.org>
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -31,14 +31,48 @@
 module Escape
   module_function
 
+  class StringWrapper
+    class << self
+      alias new_no_dup new
+      def new(str)
+        new_no_dup(str.dup)
+      end
+    end
+
+    def initialize(str)
+      @str = str
+    end
+
+    def to_s
+      @str.dup
+    end
+
+    def inspect
+      "\#<#{self.class}: #{@str}>"
+    end
+
+    def ==(other)
+      other.class == self.class && @str == other.instance_variable_get(:@str)
+    end
+    alias eql? ==
+
+    def hash
+      @str.hash
+    end
+  end
+
+  class ShellEscaped < StringWrapper
+  end
+
   # Escape.shell_command composes
   # a sequence of words to
   # a single shell command line.
   # All shell meta characters are quoted and
   # the words are concatenated with interleaving space.
+  # It returns an instance of ShellEscaped.
   #
-  #  Escape.shell_command(["ls", "/"]) #=> "ls /"
-  #  Escape.shell_command(["echo", "*"]) #=> "echo '*'"
+  #  Escape.shell_command(["ls", "/"]) #=> #<Escape::ShellEscaped: ls />
+  #  Escape.shell_command(["echo", "*"]) #=> #<Escape::ShellEscaped: echo '*'>
   #
   # Note that system(*command) and
   # system(Escape.shell_command(command)) is roughly same.
@@ -50,23 +84,25 @@ module Escape
   #   For example, system(*["echo foo"]) invokes echo command with an argument "foo".
   #   But system(Escape.shell_command(["echo foo"])) invokes "echo foo" command without arguments (and it probably fails).
   def shell_command(command)
-    command.map {|word| shell_single_word(word) }.join(' ')
+    s = command.map {|word| shell_single_word(word) }.join(' ')
+    ShellEscaped.new_no_dup(s)
   end
 
   # Escape.shell_single_word quotes shell meta characters.
+  # It returns an instance of ShellEscaped.
   #
   # The result string is always single shell word, even if
   # the argument is "".
-  # Escape.shell_single_word("") returns "''".
+  # Escape.shell_single_word("") returns #<Escape::ShellEscaped: ''>.
   #
-  #  Escape.shell_single_word("") #=> "''"
-  #  Escape.shell_single_word("foo") #=> "foo"
-  #  Escape.shell_single_word("*") #=> "'*'"
+  #  Escape.shell_single_word("") #=> #<Escape::ShellEscaped: ''>
+  #  Escape.shell_single_word("foo") #=> #<Escape::ShellEscaped: foo>
+  #  Escape.shell_single_word("*") #=> #<Escape::ShellEscaped: '*'>
   def shell_single_word(str)
     if str.empty?
-      "''"
+      ShellEscaped.new_no_dup("''")
     elsif %r{\A[0-9A-Za-z+,./:=@_-]+\z} =~ str
-      str
+      ShellEscaped.new(str)
     else
       result = ''
       str.scan(/('+)|[^']+/) {
@@ -76,13 +112,17 @@ module Escape
           result << "'#{$&}'"
         end
       }
-      result
+      ShellEscaped.new_no_dup(result)
     end
   end
 
+  class PercentEncoded < StringWrapper
+  end
+
   # Escape.uri_segment escapes URI segment using percent-encoding.
+  # It returns an instance of PercentEncoded.
   #
-  #  Escape.uri_segment("a/b") #=> "a%2Fb"
+  #  Escape.uri_segment("a/b") #=> #<Escape::PercentEncoded: a%2Fb>
   #
   # The segment is "/"-splitted element after authority before query in URI, as follows.
   #
@@ -93,17 +133,19 @@ module Escape
     # pchar - pct-encoded = unreserved / sub-delims / ":" / "@"
     # unreserved = ALPHA / DIGIT / "-" / "." / "_" / "~"
     # sub-delims = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
-    str.gsub(%r{[^A-Za-z0-9\-._~!$&'()*+,;=:@]}n) {
+    s = str.gsub(%r{[^A-Za-z0-9\-._~!$&'()*+,;=:@]}n) {
       '%' + $&.unpack("H2")[0].upcase
     }
+    PercentEncoded.new_no_dup(s)
   end
 
   # Escape.uri_path escapes URI path using percent-encoding.
   # The given path should be a sequence of (non-escaped) segments separated by "/".
   # The segments cannot contains "/".
+  # It returns an instance of PercentEncoded.
   #
-  #  Escape.uri_path("a/b/c") #=> "a/b/c"
-  #  Escape.uri_path("a?b/c?d/e?f") #=> "a%3Fb/c%3Fd/e%3Ff"
+  #  Escape.uri_path("a/b/c") #=> #<Escape::PercentEncoded: a/b/c>
+  #  Escape.uri_path("a?b/c?d/e?f") #=> #<Escape::PercentEncoded: a%3Fb/c%3Fd/e%3Ff>
   #
   # The path is the part after authority before query in URI, as follows.
   #
@@ -113,12 +155,13 @@ module Escape
   #
   # Note that this function is not appropriate to convert OS path to URI.
   def uri_path(str)
-    str.gsub(%r{[^/]+}n) { uri_segment($&) }
+    s = str.gsub(%r{[^/]+}n) { uri_segment($&) }
+    PercentEncoded.new_no_dup(s)
   end
 
   # :stopdoc:
-  def html_form_fast(pairs, sep=';')
-    pairs.map {|k, v|
+  def html_form_fast(pairs, sep='&')
+    s = pairs.map {|k, v|
       # query-chars - pct-encoded - x-www-form-urlencoded-delimiters =
       #   unreserved / "!" / "$" / "'" / "(" / ")" / "*" / "," / ":" / "@" / "/" / "?"
       # query-char - pct-encoded = unreserved / sub-delims / ":" / "@" / "/" / "?"
@@ -134,31 +177,33 @@ module Escape
       }
       "#{k}=#{v}"
     }.join(sep)
+    PercentEncoded.new_no_dup(s)
   end
   # :startdoc:
 
   # Escape.html_form composes HTML form key-value pairs as a x-www-form-urlencoded encoded string.
+  # It returns an instance of PercentEncoded.
   #
   # Escape.html_form takes an array of pair of strings or
   # an hash from string to string.
   #
-  #  Escape.html_form([["a","b"], ["c","d"]]) #=> "a=b&c=d"
-  #  Escape.html_form({"a"=>"b", "c"=>"d"}) #=> "a=b&c=d"
+  #  Escape.html_form([["a","b"], ["c","d"]]) #=> #<Escape::PercentEncoded: a=b&c=d>
+  #  Escape.html_form({"a"=>"b", "c"=>"d"}) #=> #<Escape::PercentEncoded: a=b&c=d>
   #
   # In the array form, it is possible to use same key more than once.
   # (It is required for a HTML form which contains
   # checkboxes and select element with multiple attribute.)
   #
-  #  Escape.html_form([["k","1"], ["k","2"]]) #=> "k=1&k=2"
+  #  Escape.html_form([["k","1"], ["k","2"]]) #=> #<Escape::PercentEncoded: k=1&k=2>
   #
   # If the strings contains characters which must be escaped in x-www-form-urlencoded,
   # they are escaped using %-encoding.
   #
-  #  Escape.html_form([["k=","&;="]]) #=> "k%3D=%26%3B%3D"
+  #  Escape.html_form([["k=","&;="]]) #=> #<Escape::PercentEncoded: k%3D=%26%3B%3D>
   #
   # The separator can be specified by the optional second argument.
   #
-  #  Escape.html_form([["a","b"], ["c","d"]], ";") #=> "a=b;c=d"
+  #  Escape.html_form([["a","b"], ["c","d"]], ";") #=> #<Escape::PercentEncoded: a=b;c=d>
   #
   # See HTML 4.01 for details.
   def html_form(pairs, sep='&')
@@ -192,7 +237,10 @@ module Escape
         end
       }
     }
-    r
+    PercentEncoded.new_no_dup(r)
+  end
+
+  class HTMLEscaped < StringWrapper
   end
 
   # :stopdoc:
@@ -204,19 +252,21 @@ module Escape
   # :startdoc:
 
   # Escape.html_text escapes a string appropriate for HTML text using character references.
+  # It returns an instance of HTMLEscaped.
   #
   # It escapes 3 characters:
   # * '&' to '&amp;'
   # * '<' to '&lt;'
   # * '>' to '&gt;'
   #
-  #  Escape.html_text("abc") #=> "abc"
-  #  Escape.html_text("a & b < c > d") #=> "a &amp; b &lt; c &gt; d"
+  #  Escape.html_text("abc") #=> #<Escape::HTMLEscaped: abc>
+  #  Escape.html_text("a & b < c > d") #=> #<Escape::HTMLEscaped: a &amp; b &lt; c &gt; d>
   #
   # This function is not appropriate for escaping HTML element attribute
   # because quotes are not escaped.
   def html_text(str)
-    str.gsub(/[&<>]/) {|ch| HTML_TEXT_ESCAPE_HASH[ch] }
+    s = str.gsub(/[&<>]/) {|ch| HTML_TEXT_ESCAPE_HASH[ch] }
+    HTMLEscaped.new_no_dup(s)
   end
 
   # :stopdoc:
@@ -228,8 +278,16 @@ module Escape
   }
   # :startdoc:
 
-  # Escape.html_attribute_content escapes a string appropriate for an HTML attribute which is quoted
-  # by double-quote.
+  class HTMLAttrValue < StringWrapper
+  end
+
+  # Escape.html_attr_value encodes a string as a double-quoted HTML attribute using character references.
+  # It returns an instance of HTMLAttrValue.
+  #
+  #  Escape.html_attr_value("abc") #=> #<Escape::HTMLAttrValue: "abc">
+  #  Escape.html_attr_value("a&b") #=> #<Escape::HTMLAttrValue: "a&amp;b">
+  #  Escape.html_attr_value("ab&<>\"c") #=> #<Escape::HTMLAttrValue: "ab&amp;&lt;&gt;&quot;c">
+  #  Escape.html_attr_value("a'c") #=> #<Escape::HTMLAttrValue: "a'c">
   #
   # It escapes 4 characters:
   # * '&' to '&amp;'
@@ -237,17 +295,8 @@ module Escape
   # * '>' to '&gt;'
   # * '"' to '&quot;'
   #
-  # This function is not appropriate for an attribute which is quoted by single-quote.
-  def html_attribute_content(str)
-    str.gsub(/[&<>"]/) {|ch| HTML_ATTR_ESCAPE_HASH[ch] }
-  end
-
-  # Escape.html_attr encodes a string as a double-quoted HTML attribute using character references.
-  #
-  #  Escape.html_attr("abc") #=> "\"abc\""
-  #  Escape.html_attr("a&b") #=> "\"a&amp;b\""
-  #
-  def html_attr(str)
-    '"' + Escape.html_attribute_content(str) + '"'
+  def html_attr_value(str)
+    s = '"' + str.gsub(/[&<>"]/) {|ch| HTML_ATTR_ESCAPE_HASH[ch] } + '"'
+    HTMLAttrValue.new_no_dup(s)
   end
 end

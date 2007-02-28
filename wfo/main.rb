@@ -226,7 +226,7 @@ End
       local_file.path,
       original_file.path,
       remote_file.path]
-    merged = IO.popen(Escape.shell_command(command), 'r') {|f|
+    merged = IO.popen(Escape.shell_command(command).to_s, 'r') {|f|
       f.read
     }
     status = $?
@@ -309,7 +309,7 @@ End
           command = ['diff', '-u',
             "--label=#{other_label}", other_file.path,
             "--label=#{w.filename}", local_file.path]
-          system(Escape.shell_command(command))
+          system(Escape.shell_command(command).to_s)
         end
       }
       exit no_diff

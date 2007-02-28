@@ -1,6 +1,6 @@
 # wfo/form.rb - HTML form handling library
 #
-# Copyright (C) 2006 Tanaka Akira  <akr@fsij.org>
+# Copyright (C) 2006,2007 Tanaka Akira  <akr@fsij.org>
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -183,7 +183,7 @@ class WFO::Form
     when 'get'
       case @enctype
       when 'application/x-www-form-urlencoded'
-        query = encode_application_x_www_form_urlencoded(submit_name)
+        query = encode_application_x_www_form_urlencoded(submit_name).instance_variable_get(:@str)
         secrets << query
         request_uri = @action_uri.request_uri + "?"
         request_uri += query
@@ -201,7 +201,7 @@ class WFO::Form
     when 'post'
       case @enctype
       when 'application/x-www-form-urlencoded'
-        query = encode_application_x_www_form_urlencoded(submit_name)
+        query = encode_application_x_www_form_urlencoded(submit_name).instance_variable_get(:@str)
         secrets << query
         req = WFO::ReqHTTP.post(@action_uri, 'application/x-www-form-urlencoded', query)
       else
