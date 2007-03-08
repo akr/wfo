@@ -200,7 +200,7 @@ class WFO::WebClient
     result = page_str.decode_charset(charset)
     round_trip = result.encode_charset(charset)
     if page_str != round_trip
-      raise "cannot decode in round trip manner: #{uri}"
+      raise "Your locale encoding, #{Mconv.internal_mime_charset}, cannot represent the page: #{uri}"
     end
     OpenURI::Meta.init result, page_str
     return result, charset
