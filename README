@@ -1,9 +1,4 @@
 = wfo - wiki frontend at offline
-<%
-  def version
-    File.read("VERSION").chomp
-  end
-%>
 
 wfo is a offline frontend for wikis and blogs. 
 You can checkout a wiki page to a local file,
@@ -22,7 +17,7 @@ GPLv2 or later
 
 == Home Page
 
-((<URL:http://www.a-k-r.org/wfo/>))
+http://www.a-k-r.org/wfo/
 
 == Feature
 
@@ -44,7 +39,7 @@ GPLv2 or later
 
 == Download
 
-* latest release: ((<wfo-<%=version%>.tar.gz|URL:wfo-<%=version%>.tar.gz>))
+* latest release: http://www.a-k-r.org/wfo/wfo-0.1.tar.gz
 
 * development version in Subversion repository:
 
