@@ -20,7 +20,7 @@ require 'htree'
 
 class WFO::Trac < WFO::Repo
   def self.applicable?(page)
-    %r{<a id="tracpowered" href="http://trac.edgewall.com/">} =~ page
+    %r{<a id="tracpowered" href="http://trac.edgewall.(com|org)/">} =~ page
   end
 
   def self.find_stable_uri(page)
@@ -58,7 +58,7 @@ module WFO::Auth
   def self.trac_auth_handler(webclient, resp)
     uri = resp.uri
 
-    unless %r{<a id="tracpowered" href="http://trac.edgewall.com/">} =~ resp.body
+    unless %r{<a id="tracpowered" href="http://trac.edgewall.(com|org)/">} =~ resp.body
       return nil
     end
     if resp.code != '403'
