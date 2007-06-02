@@ -82,7 +82,7 @@ autoload :Etc, 'etc'
 #
 # === Example 2.  HTTP Basic Authentication
 #
-#  % echo http://www.example.org basic "realm" username password |
+#  % echo http://www.example.org basic '"realm"' username password |
 #    gpg --comment 'http://www.example.org basic "realm" username' -e -a --default-recipient-self > example-org.asc
 #
 # It creates a file ~/.keyring/example-org.asc as follows.
@@ -106,6 +106,11 @@ autoload :Etc, 'etc'
 #
 #   KeyRing.with_authinfo("http://www.example.org", "basic") {|realm, username, password| ... }
 #   KeyRing.with_authinfo("http://www.example.org") {|auth_scheme, realm, username, password| ... }
+#
+# === Example 3.  HTTP Digest Authentication
+#
+#  % echo http://www.example.org digest '"realm"' username password |
+#    gpg --comment 'http://www.example.org digest "realm" username' -e -a --default-recipient-self > example-org.asc
 #
 # == Keyring Directory Layout and File Format
 #
