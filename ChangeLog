@@ -1,3 +1,9 @@
+2007-06-02  Tanaka Akira  <akr@fsij.org>
+
+	* secrand.rb: new file.
+
+	* wfo/auth.rb, wfo/webclient.rb: support http digest authentication.
+
 2007-05-10  Masatake YAMATO  <jet@gyve.org>
 
 	* wfo/repo/trac.rb (self.trac_auth_handler): Handle
