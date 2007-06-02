@@ -244,7 +244,7 @@ class KeyRing
         authinfo[0, protection_domain.length].each {|v| KeyRing.vanish!(v) }
         authinfo[0, protection_domain.length] = []
       end
-      ret = yield *authinfo
+      ret = yield(*authinfo)
     ensure
       KeyRing.vanish!(s) if s
       authinfo.each {|v| KeyRing.vanish!(v) } if authinfo

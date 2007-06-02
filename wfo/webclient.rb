@@ -52,6 +52,7 @@ class WFO::WebClient
 
   def initialize
     @basic_credentials = {}
+    @digest_credentials = {}
     @cookies = {}
   end
 
@@ -71,6 +72,44 @@ class WFO::WebClient
     @basic_credentials[canonical_root_url].each {|realm, path_pat, credential|
       if path_pat =~ path
         request['Authorization'] = "Basic #{credential}"
+        break
+      end
+    }
+  end
+
+  def add_digest_credential(protection_domain_uris, realm, username, nonce, ha1)
+    protection_domain_uris.each {|uri|
+      canonical_root_url = uri.dup
+      canonical_root_url.path = ""
+      canonical_root_url.query = nil
+      canonical_root_url.fragment = nil
+      canonical_root_url = canonical_root_url.to_s
+      path_pat = /\A#{Regexp.quote uri.path.sub(%r{[^/]*\z}, '')}/
+      @digest_credentials[canonical_root_url] ||= []
+      @digest_credentials[canonical_root_url] << [realm, path_pat, username, nonce, ha1, 1]
+    }
+  end
+
+  def make_request_digest_authenticated(request)
+    canonical_root_url = request.uri.dup
+    canonical_root_url.path = ""
+    canonical_root_url.query = nil
+    canonical_root_url.fragment = nil
+    canonical_root_url = canonical_root_url.to_s
+    return if !@digest_credentials[canonical_root_url]
+    path = request.uri.path
+    @digest_credentials[canonical_root_url].each_with_index {|(realm, path_pat, username, nonce, ha1, nc), i|
+      if path_pat =~ path
+        qop = 'auth'
+        cnonce = SecRand.hex(16)
+        nonce_count = sprintf("%08d", nc)
+        @digest_credentials[canonical_root_url][i][-1] += 1
+        uri = request.uri.request_uri
+        method = request.http_method
+        a2 = "#{method}:#{uri}"
+        ha2 = Digest::MD5.hexdigest(a2)
+        request_digest = Digest::MD5.hexdigest("#{ha1}:#{nonce}:#{nonce_count}:#{cnonce}:#{qop}:#{ha2}")
+        request['Authorization'] = "Digest username=\"#{username}\", realm=\"#{realm}\", nonce=\"#{nonce}\", uri=\"#{uri}\", qop=#{qop}, cnonce=\"#{cnonce}\", nc=\"#{nonce_count}\", response=\"#{request_digest}\""
         break
       end
     }
@@ -128,6 +167,7 @@ class WFO::WebClient
 
   def do_request_state(request)
     make_request_basic_authenticated(request)
+    make_request_digest_authenticated(request)
     insert_cookie_header(request)
     resp = do_request_simple(request)
     update_cookies(request.uri, resp['Set-Cookie']) if resp['Set-Cookie']
@@ -234,6 +274,10 @@ module WFO
       @body = body
     end
     attr_reader :uri
+
+    def http_method
+      @method
+    end
 
     def []=(field_name, field_value)
       @header[field_name] = field_value

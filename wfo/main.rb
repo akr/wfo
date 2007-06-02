@@ -23,6 +23,9 @@ require 'optparse'
 require 'open-uri'
 require 'pathname'
 require 'tempfile'
+require 'digest/md5'
+
+require 'secrand'
 
 module WFO
 end

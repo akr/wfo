@@ -116,25 +116,10 @@ module WFO::Auth
 end
 
 module WFO
-  def Auth.http_basic_auth_handler(webclient, response)
+  def Auth.http_auth_basic(webclient, response, params)
     uri = response.uri
-    unless response.code == '401' &&
-           response['www-authenticate'] &&
-           response['www-authenticate'] =~ /\A\s*#{Pat::HTTP_Challenge}s*\z/n
-      return nil
-    end
-    auth_scheme = $1
-    rest = $2
-    params = []
-    while /\A#{Pat::HTTP_AuthParam}(?:(?:\s*,\s*)|\s*\z)/ =~ rest
-      rest = $'
-      k = $1
-      v = $3 ? $3.gsub(/\\([\000-\377])/) { $1 } : $2
-      params << [k, v]
-    end
-    return nil if /\Abasic\z/i !~ auth_scheme
-    return nil if params.length != 1
-    k, v = params[0]
+    return nil if params.size != 1
+    k, v = params.shift
     return nil if /\Arealm\z/i !~ k
     realm = v
     protection_domain = KeyRing.http_protection_domain(uri, 'basic', realm)
@@ -144,10 +129,86 @@ module WFO
       credential = [user_pass].pack("m")
       KeyRing.vanish!(user_pass)
       credential.gsub!(/\s+/, '')
-      path_pat = /\A#{uri.path.sub(%r{[^/]*\z}, '')}/
+      path_pat = /\A#{Regexp.quote uri.path.sub(%r{[^/]*\z}, '')}/
       webclient.add_basic_credential(canonical_root_url, realm, path_pat, credential)
     }
-    webclient.make_request_basic_authenticated(response.request) # xxx: update req destructively.
     return response.request
   end
+
+  def Auth.http_auth_digest(webclient, response, params)
+    realm = params['realm']
+    nonce = params['nonce']
+    qop = params['qop']
+    algorithm = params['algorithm']
+
+    return nil if !realm
+    return nil if !nonce
+    return nil if qop != 'auth'
+    return nil if algorithm != 'MD5'
+
+    canonical_root_url = response.uri.dup
+    canonical_root_url.path = ""
+    canonical_root_url.query = nil
+    canonical_root_url.fragment = nil
+    if domain = params['domain']
+      domain_uris = domain.split(/\s+/)
+      protection_domain_uris = domain_uris.map {|u|
+        u = URI.parse(u)
+        u = canonical_root_url + u if u.relative?
+        u
+      }
+    else
+      protection_domain_uris = [canonical_root_url]
+    end
+    target_host_protection_domain_uris =  protection_domain_uris.reject {|u|
+      u.scheme != canonical_root_url.scheme ||
+      u.host != canonical_root_url.host ||
+      u.port != canonical_root_url.port
+    }
+    target_host_protection_domain_uris = [canonical_root_url] if target_host_protection_domain_uris.empty?
+    shortest_uri = target_host_protection_domain_uris.min_by {|u| u.path.length }
+    protection_domain = [shortest_uri.to_s, 'digest', realm]
+    KeyRing.with_authinfo(protection_domain) {|username, password|
+      a1 = "#{username}:#{realm}:#{password}"
+      ha1 = Digest::MD5.hexdigest(a1)
+      KeyRing.vanish!(a1)
+      webclient.add_digest_credential(protection_domain_uris, realm, username.dup, nonce, ha1)
+    }
+    return response.request
+  end
+
+  HTTPAuthSchemeStrength = {
+    'basic' => 1,
+    'digest' => 2,
+  }
+  HTTPAuthSchemeStrength.default = -1
+    
+  def Auth.http_auth_handler(webclient, response)
+    unless response.code == '401' &&
+           response['www-authenticate'] &&
+           response['www-authenticate'] =~ /\A\s*#{Pat::HTTP_ChallengeList}s*\z/n
+      return nil
+    end
+    challenges = [[$1, $2]]
+    rest = $3
+    challenges.concat rest.scan(/\s*,\s*#{Pat::HTTP_Challenge}/)
+    challenges.map! {|as, r|
+      params = {}
+      while /\A#{Pat::HTTP_AuthParam}(?:(?:\s*,\s*)|\s*\z)/ =~ r
+        r = $'
+        k = $1
+        v = $3 ? $3.gsub(/\\([\000-\377])/) { $1 } : $2
+        return nil if params[k]
+        params[k] = v
+      end
+      [as.downcase, params]
+    }
+    challenge = challenges.max_by {|as, _| HTTPAuthSchemeStrength[as] }
+
+    auth_scheme, params = challenge
+    return nil if HTTPAuthSchemeStrength[auth_scheme] < 0
+
+    self.send("http_auth_#{auth_scheme}", webclient, response, params)
+  end
 end
+

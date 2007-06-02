@@ -86,3 +86,51 @@ unless HTree::Doc::Trav.instance_methods.include? "base_uri"
     end
   end
 end
+
+unless Enumerable.instance_methods.include? "max_by"
+  module Enumerable
+    def max_by
+      first = true
+      order = nil
+      value = nil
+      self.each {|v|
+        if first
+          order = yield(v)
+          value = v
+          first = false
+        else
+          o = yield(v)
+          if order < o
+            order = o
+            value = v
+          end
+        end
+      }
+      value
+    end
+  end
+end
+
+unless Enumerable.instance_methods.include? "min_by"
+  module Enumerable
+    def min_by
+      first = true
+      order = nil
+      value = nil
+      self.each {|v|
+        if first
+          order = yield(v)
+          value = v
+          first = false
+        else
+          o = yield(v)
+          if o < order
+            order = o
+            value = v
+          end
+        end
+      }
+      value
+    end
+  end
+end
