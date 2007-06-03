@@ -203,6 +203,8 @@ class KeyRing
   # KeyRing.with_authinfo takes one or more strings as the argument.
   # protection_domain can be a string or an array of strings.
   #
+  # It returns the value of the block.
+  #
   # protection_domain is compared to the Comment fields in ~/.keyring/*.asc.
   # If a matched Comment field is found, the corresponding file is decrypted to obtain
   # the authentication information represented as a sequence of strings using gpg.
