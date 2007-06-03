@@ -140,6 +140,7 @@ module WFO
     nonce = params['nonce']
     qop = params['qop']
     algorithm = params['algorithm'] || 'MD5'
+    opaque = params['opaque']
 
     return nil if !realm
     return nil if !nonce
@@ -172,7 +173,7 @@ module WFO
       a1 = "#{username}:#{realm}:#{password}"
       ha1 = Digest::MD5.hexdigest(a1)
       KeyRing.vanish!(a1)
-      webclient.add_digest_credential(protection_domain_uris, realm, username.dup, nonce, ha1)
+      webclient.add_digest_credential(protection_domain_uris, realm, username.dup, nonce, ha1, algorithm, opaque)
     }
     return response.request
   end

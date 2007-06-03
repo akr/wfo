@@ -77,7 +77,7 @@ class WFO::WebClient
     }
   end
 
-  def add_digest_credential(protection_domain_uris, realm, username, nonce, ha1)
+  def add_digest_credential(protection_domain_uris, realm, username, nonce, ha1, algorithm, opaque)
     protection_domain_uris.each {|uri|
       canonical_root_url = uri.dup
       canonical_root_url.path = ""
@@ -86,7 +86,7 @@ class WFO::WebClient
       canonical_root_url = canonical_root_url.to_s
       path_pat = /\A#{Regexp.quote uri.path.sub(%r{[^/]*\z}, '')}/
       @digest_credentials[canonical_root_url] ||= []
-      @digest_credentials[canonical_root_url] << [realm, path_pat, username, nonce, ha1, 1]
+      @digest_credentials[canonical_root_url] << [realm, path_pat, username, nonce, ha1, algorithm, opaque, 1]
     }
   end
 
@@ -98,7 +98,7 @@ class WFO::WebClient
     canonical_root_url = canonical_root_url.to_s
     return if !@digest_credentials[canonical_root_url]
     path = request.uri.path
-    @digest_credentials[canonical_root_url].each_with_index {|(realm, path_pat, username, nonce, ha1, nc), i|
+    @digest_credentials[canonical_root_url].each_with_index {|(realm, path_pat, username, nonce, ha1, algorithm, opaque, nc), i|
       if path_pat =~ path
         qop = 'auth'
         cnonce = SecRand.base64(18)
@@ -118,6 +118,8 @@ class WFO::WebClient
         auth << ", cnonce=#{Escape.http_quoted_string cnonce}"
         auth << ", nc=#{Escape.http_parameter_value nonce_count}"
         auth << ", response=#{Escape.http_quoted_string request_digest}"
+        auth << ", algorithm=#{Escape.http_parameter_value algorithm}" if algorithm
+        auth << ", opaque=#{Escape.http_quoted_string algorithm}" if opaque
         request['Authorization'] = auth
         break
       end
