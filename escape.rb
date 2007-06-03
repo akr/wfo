@@ -28,6 +28,7 @@
 # * URI
 # * HTML
 # * shell command
+# * MIME parameter
 module Escape
   module_function
 
@@ -43,9 +44,11 @@ module Escape
       @str = str
     end
 
-    def to_s
+    def escaped_string
       @str.dup
     end
+
+    alias to_s escaped_string
 
     def inspect
       "\#<#{self.class}: #{@str}>"
@@ -75,14 +78,15 @@ module Escape
   #  Escape.shell_command(["echo", "*"]) #=> #<Escape::ShellEscaped: echo '*'>
   #
   # Note that system(*command) and
-  # system(Escape.shell_command(command)) is roughly same.
+  # system(Escape.shell_command(command).to_s) is roughly same.
   # There are two exception as follows.
   # * The first is that the later may invokes /bin/sh.
   # * The second is an interpretation of an array with only one element: 
   #   the element is parsed by the shell with the former but
   #   it is recognized as single word with the later.
   #   For example, system(*["echo foo"]) invokes echo command with an argument "foo".
-  #   But system(Escape.shell_command(["echo foo"])) invokes "echo foo" command without arguments (and it probably fails).
+  #   But system(Escape.shell_command(["echo foo"]).to_s) invokes "echo foo" command
+  #   without arguments (and it probably fails).
   def shell_command(command)
     s = command.map {|word| shell_single_word(word) }.join(' ')
     ShellEscaped.new_no_dup(s)
@@ -116,7 +120,56 @@ module Escape
     end
   end
 
+  class InvalidHTMLForm < StandardError
+  end
   class PercentEncoded < StringWrapper
+    # Escape::PercentEncoded#split_html_form decodes
+    # percent-encoded string as
+    # application/x-www-form-urlencoded
+    # defined by HTML specification.
+    #
+    # It recognizes "&" and ";" as a separator of key-value pairs.
+    #
+    # If it find is not valid as
+    # application/x-www-form-urlencoded,
+    # Escape::InvalidHTMLForm exception is raised.
+    #
+    #  Escape::PercentEncoded.new("a=b&c=d")
+    #  #=> [[#<Escape::PercentEncoded: a>, #<Escape::PercentEncoded: b>],
+    #       [#<Escape::PercentEncoded: c>, #<Escape::PercentEncoded: d>]]
+    #
+    #  Escape::PercentEncoded.new("a=b;c=d").split_html_form
+    #  #=> [[#<Escape::PercentEncoded: a>, #<Escape::PercentEncoded: b>],
+    #       [#<Escape::PercentEncoded: c>, #<Escape::PercentEncoded: d>]]
+    #
+    #  Escape::PercentEncoded.new("%3D=%3F").split_html_form
+    #  #=> [[#<Escape::PercentEncoded: %3D>, #<Escape::PercentEncoded: %3F>]]
+    #
+    def split_html_form
+      assoc = []
+      @str.split(/[&;]/, -1).each {|s|
+        raise InvalidHTMLForm, "invalid: #{@str}" unless /=/ =~ s
+        assoc << [PercentEncoded.new_no_dup($`), PercentEncoded.new_no_dup($')]
+      }
+      assoc
+    end
+  end
+
+  # Escape.percent_encoding escapes URI non-unreserved characters using percent-encoding.
+  # It returns an instance of PercentEncoded.
+  #
+  # The unreserved characters are alphabet, digit, hyphen, dot, underscore and tilde.
+  # [RFC 3986]
+  #
+  #  Escape.percent_encoding("foo") #=> #<Escape::PercentEncoded: foo>
+  #
+  #  Escape.percent_encoding(' !"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~')
+  #  #=> #<Escape::PercentEncoded: %20%21%22%23%24%25%26%27%28%29%2A%2B%2C-.%2F%3A%3B%3C%3D%3E%3F%40%5B%5C%5D%5E_%60%7B%7C%7D~>
+  def percent_encoding(str)
+    s = str.gsub(%r{[^a-zA-Za-z0-9\-._~]}n) {
+      '%' + $&.unpack("H2")[0].upcase
+    }
+    PercentEncoded.new_no_dup(s)
   end
 
   # Escape.uri_segment escapes URI segment using percent-encoding.
@@ -140,12 +193,16 @@ module Escape
   end
 
   # Escape.uri_path escapes URI path using percent-encoding.
-  # The given path should be a sequence of (non-escaped) segments separated by "/".
-  # The segments cannot contains "/".
+  #
+  # The given path should be one of follows.
+  # * a sequence of (non-escaped) segments separated by "/".  (The segments cannot contains "/".)
+  # * an array containing (non-escaped) segments.  (The segments may contains "/".)
+  #
   # It returns an instance of PercentEncoded.
   #
   #  Escape.uri_path("a/b/c") #=> #<Escape::PercentEncoded: a/b/c>
   #  Escape.uri_path("a?b/c?d/e?f") #=> #<Escape::PercentEncoded: a%3Fb/c%3Fd/e%3Ff>
+  #  Escape.uri_path(%w[/d f]) #=> "%2Fd/f"
   #
   # The path is the part after authority before query in URI, as follows.
   #
@@ -154,8 +211,12 @@ module Escape
   # See RFC 3986 for details of URI.
   #
   # Note that this function is not appropriate to convert OS path to URI.
-  def uri_path(str)
-    s = str.gsub(%r{[^/]+}n) { uri_segment($&) }
+  def uri_path(arg)
+    if arg.respond_to? :to_ary
+      s = arg.map {|elt| uri_segment(elt) }.join('/')
+    else
+      s = arg.gsub(%r{[^/]+}n) { uri_segment($&) }
+    end
     PercentEncoded.new_no_dup(s)
   end
 
@@ -299,4 +360,45 @@ module Escape
     s = '"' + str.gsub(/[&<>"]/) {|ch| HTML_ATTR_ESCAPE_HASH[ch] } + '"'
     HTMLAttrValue.new_no_dup(s)
   end
+
+  # MIMEParameter represents parameter, token, quoted-string in MIME.
+  # parameter and token is defined in RFC 2045.
+  # quoted-string is defined in RFC 822.
+  class MIMEParameter < StringWrapper
+  end
+
+  # predicate for MIME token.
+  #
+  # token is a sequence of any (US-ASCII) CHAR except SPACE, CTLs, or tspecials.
+  def mime_token?(str)
+    /\A[!\#-'*-+\-.0-9A-Z^-~]+\z/ =~ str ? true : false
+  end
+
+  # Escape.rfc2822_quoted_string escapes a string as quoted-string defined in RFC 2822.
+  # It returns an instance of MIMEParameter.
+  #
+  # It cannot represents CR, LF and NUL. 
+  # If the string contained them, ArgumentError is raised.
+  #
+  def rfc2822_quoted_string(str)
+    if /[\r\n\0]/ =~ str
+      raise ArgumentError, "CR, LF or NUL contained: #{str.inspect}"
+    end
+    s = '"' + str.gsub(/["\\]/, '\\\\\&') + '"'
+    MIMEParameter.new_no_dup(s)
+  end
+
+  # Escape.mime_parameter_value escapes a string as MIME parameter value in RFC 2045.
+  # It returns an instance of MIMEParameter.
+  #
+  # MIME parameter value is token or quoted-string.
+  # token is returned if possible.
+  def mime_parameter_value(str)
+    if mime_token?(str)
+      MIMEParameter.new(str)
+    else
+      rfc2822_quoted_string(str)
+    end
+  end
+
 end
