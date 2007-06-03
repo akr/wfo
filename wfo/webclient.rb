@@ -56,9 +56,10 @@ class WFO::WebClient
     @cookies = {}
   end
 
-  def add_basic_credential(canonical_root_url, realm, path_pat, credential)
+  def add_basic_credential(agent)
+    canonical_root_url = agent.canonical_root_url
     @basic_credentials[canonical_root_url] ||= []
-    @basic_credentials[canonical_root_url] << [realm, path_pat, credential]
+    @basic_credentials[canonical_root_url] << agent
   end
 
   def make_request_basic_authenticated(request)
@@ -69,9 +70,9 @@ class WFO::WebClient
     canonical_root_url = canonical_root_url.to_s
     return if !@basic_credentials[canonical_root_url]
     path = request.uri.path
-    @basic_credentials[canonical_root_url].each {|realm, path_pat, credential|
-      if path_pat =~ path
-        request['Authorization'] = "Basic #{credential}"
+    @basic_credentials[canonical_root_url].each {|agent|
+      if agent.path_pat =~ path
+        request['Authorization'] = agent.generate_authorization(request)
         break
       end
     }

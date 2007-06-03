@@ -117,31 +117,51 @@ end
 
 module WFO
   def Auth.http_auth_basic(webclient, response, params)
-    uri = response.uri
-    return nil if params.size != 1
-    k, v = params.shift
-    return nil if /\Arealm\z/i !~ k
-    realm = v
-    protection_domain = KeyRing.http_protection_domain(uri, 'basic', realm)
-    canonical_root_url = protection_domain[0]
-    KeyRing.with_authinfo(protection_domain) {|username, password|
-      user_pass = "#{username}:#{password}"
-      credential = [user_pass].pack("m")
-      KeyRing.vanish!(user_pass)
-      credential.gsub!(/\s+/, '')
-      path_pat = /\A#{Regexp.quote uri.path.sub(%r{[^/]*\z}, '')}/
-      webclient.add_basic_credential(canonical_root_url, realm, path_pat, credential)
-    }
+    agent = HTTPBasicAuthAgent.www_authenticate(response.uri, params)
+    return nil if !agent
+    webclient.add_basic_credential(agent)
     return response.request
   end
 
+  class HTTPBasicAuthAgent
+    def self.www_authenticate(uri, params)
+      return nil if params.size != 1
+      k, v = params.shift
+      return nil if /\Arealm\z/i !~ k
+      realm = v
+      protection_domain = KeyRing.http_protection_domain(uri, 'basic', realm)
+      canonical_root_url = protection_domain[0]
+      KeyRing.with_authinfo(protection_domain) {|username, password|
+        user_pass = "#{username}:#{password}"
+        credential = [user_pass].pack("m")
+        KeyRing.vanish!(user_pass)
+        credential.gsub!(/\s+/, '')
+        path_pat = /\A#{Regexp.quote uri.path.sub(%r{[^/]*\z}, '')}/
+        HTTPBasicAuthAgent.new(canonical_root_url, realm, path_pat, credential)
+      }
+    end
+
+    def initialize(canonical_root_url, realm, path_pat, credential)
+      @canonical_root_url = canonical_root_url
+      @realm = realm
+      @path_pat = path_pat
+      @credential = credential
+    end
+    attr_reader :canonical_root_url, :path_pat
+
+    def generate_authorization(request)
+      "Basic #{@credential}"
+    end
+  end
+
   def Auth.http_auth_digest(webclient, response, params)
-    agent = HTTPDigestAgent.www_authenticate(response.uri, params)
+    agent = HTTPDigestAuthAgent.www_authenticate(response.uri, params)
+    return nil if !agent
     webclient.add_digest_credential(agent.protection_domain_uris, agent)
     return response.request
   end
 
-  class HTTPDigestAgent
+  class HTTPDigestAuthAgent
     def self.www_authenticate(uri, params)
       realm = params['realm']
       nonce = params['nonce']
