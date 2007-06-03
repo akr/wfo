@@ -78,7 +78,8 @@ class WFO::WebClient
     }
   end
 
-  def add_digest_credential(protection_domain_uris, agent)
+  def add_digest_credential(agent)
+    protection_domain_uris = agent.protection_domain_uris
     protection_domain_uris.each {|uri|
       canonical_root_url = uri.dup
       canonical_root_url.path = ""

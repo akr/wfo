@@ -157,7 +157,7 @@ module WFO
   def Auth.http_auth_digest(webclient, response, params)
     agent = HTTPDigestAuthAgent.www_authenticate(response.uri, params)
     return nil if !agent
-    webclient.add_digest_credential(agent.protection_domain_uris, agent)
+    webclient.add_digest_credential(agent)
     return response.request
   end
 
@@ -200,7 +200,7 @@ module WFO
         a1 = "#{username}:#{realm}:#{password}"
         ha1 = Digest::MD5.hexdigest(a1)
         KeyRing.vanish!(a1)
-        HTTPDigestAgent.new(protection_domain_uris, realm, username.dup, nonce, ha1, algorithm, opaque)
+        HTTPDigestAuthAgent.new(protection_domain_uris, realm, username.dup, nonce, ha1, algorithm, opaque)
       }
     end
 
