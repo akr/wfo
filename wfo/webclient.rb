@@ -77,7 +77,7 @@ class WFO::WebClient
     }
   end
 
-  def add_digest_credential(protection_domain_uris, realm, username, nonce, ha1, algorithm, opaque)
+  def add_digest_credential(protection_domain_uris, agent)
     protection_domain_uris.each {|uri|
       canonical_root_url = uri.dup
       canonical_root_url.path = ""
@@ -86,7 +86,7 @@ class WFO::WebClient
       canonical_root_url = canonical_root_url.to_s
       path_pat = /\A#{Regexp.quote uri.path.sub(%r{[^/]*\z}, '')}/
       @digest_credentials[canonical_root_url] ||= []
-      @digest_credentials[canonical_root_url] << [realm, path_pat, username, nonce, ha1, algorithm, opaque, 1]
+      @digest_credentials[canonical_root_url] << [path_pat, agent]
     }
   end
 
@@ -98,29 +98,9 @@ class WFO::WebClient
     canonical_root_url = canonical_root_url.to_s
     return if !@digest_credentials[canonical_root_url]
     path = request.uri.path
-    @digest_credentials[canonical_root_url].each_with_index {|(realm, path_pat, username, nonce, ha1, algorithm, opaque, nc), i|
+    @digest_credentials[canonical_root_url].each_with_index {|(path_pat, agent), i|
       if path_pat =~ path
-        qop = 'auth'
-        cnonce = SecRand.base64(18)
-        nonce_count = sprintf("%08x", nc)
-        @digest_credentials[canonical_root_url][i][-1] += 1
-        digest_uri = request.uri.request_uri
-        method = request.http_method
-        a2 = "#{method}:#{digest_uri}"
-        ha2 = Digest::MD5.hexdigest(a2)
-        request_digest = Digest::MD5.hexdigest("#{ha1}:#{nonce}:#{nonce_count}:#{cnonce}:#{qop}:#{ha2}")
-        auth = "Digest"
-        auth << " username=#{Escape.http_quoted_string username}"
-        auth << ", realm=#{Escape.http_quoted_string realm}"
-        auth << ", nonce=#{Escape.http_quoted_string nonce}"
-        auth << ", uri=#{Escape.http_parameter_value digest_uri}"
-        auth << ", qop=#{Escape.http_parameter_value qop}"
-        auth << ", cnonce=#{Escape.http_quoted_string cnonce}"
-        auth << ", nc=#{Escape.http_parameter_value nonce_count}"
-        auth << ", response=#{Escape.http_quoted_string request_digest}"
-        auth << ", algorithm=#{Escape.http_parameter_value algorithm}" if algorithm
-        auth << ", opaque=#{Escape.http_quoted_string algorithm}" if opaque
-        request['Authorization'] = auth
+        request['Authorization'] = agent.make_authorization(request)
         break
       end
     }
