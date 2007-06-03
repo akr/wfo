@@ -100,7 +100,7 @@ class WFO::WebClient
     path = request.uri.path
     @digest_credentials[canonical_root_url].each_with_index {|(path_pat, agent), i|
       if path_pat =~ path
-        request['Authorization'] = agent.make_authorization(request)
+        request['Authorization'] = agent.generate_authorization(request)
         break
       end
     }

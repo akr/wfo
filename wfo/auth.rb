@@ -136,50 +136,56 @@ module WFO
   end
 
   def Auth.http_auth_digest(webclient, response, params)
-    realm = params['realm']
-    nonce = params['nonce']
-    qop = params['qop']
-    algorithm = params['algorithm'] || 'MD5'
-    opaque = params['opaque']
-
-    return nil if !realm
-    return nil if !nonce
-    return nil if qop != 'auth'
-    return nil if /\Amd5\z/i !~ algorithm
-
-    canonical_root_url = response.uri.dup
-    canonical_root_url.path = ""
-    canonical_root_url.query = nil
-    canonical_root_url.fragment = nil
-    if domain = params['domain']
-      domain_uris = domain.split(/\s+/)
-      protection_domain_uris = domain_uris.map {|u|
-        u = URI.parse(u)
-        u = canonical_root_url + u if u.relative?
-        u
-      }
-    else
-      protection_domain_uris = [canonical_root_url]
-    end
-    target_host_protection_domain_uris =  protection_domain_uris.reject {|u|
-      u.scheme != canonical_root_url.scheme ||
-      u.host != canonical_root_url.host ||
-      u.port != canonical_root_url.port
-    }
-    target_host_protection_domain_uris = [canonical_root_url] if target_host_protection_domain_uris.empty?
-    shortest_uri = target_host_protection_domain_uris.min_by {|u| u.path.length }
-    protection_domain = [shortest_uri.to_s, 'digest', realm]
-    KeyRing.with_authinfo(protection_domain) {|username, password|
-      a1 = "#{username}:#{realm}:#{password}"
-      ha1 = Digest::MD5.hexdigest(a1)
-      KeyRing.vanish!(a1)
-      webclient.add_digest_credential(protection_domain_uris, HTTPDigestAgent.new(realm, username.dup, nonce, ha1, algorithm, opaque))
-    }
+    agent = HTTPDigestAgent.www_authenticate(response.uri, params)
+    webclient.add_digest_credential(agent.protection_domain_uris, agent)
     return response.request
   end
 
   class HTTPDigestAgent
-    def initialize(realm, username, nonce, ha1, algorithm, opaque)
+    def self.www_authenticate(uri, params)
+      realm = params['realm']
+      nonce = params['nonce']
+      qop = params['qop']
+      algorithm = params['algorithm'] || 'MD5'
+      opaque = params['opaque']
+
+      return nil if !realm
+      return nil if !nonce
+      return nil if qop != 'auth'
+      return nil if /\Amd5\z/i !~ algorithm
+
+      canonical_root_url = uri.dup
+      canonical_root_url.path = ""
+      canonical_root_url.query = nil
+      canonical_root_url.fragment = nil
+      if domain = params['domain']
+        domain_uris = domain.split(/\s+/)
+        protection_domain_uris = domain_uris.map {|u|
+          u = URI.parse(u)
+          u = canonical_root_url + u if u.relative?
+          u
+        }
+      else
+        protection_domain_uris = [canonical_root_url]
+      end
+      target_host_protection_domain_uris =  protection_domain_uris.reject {|u|
+        u.scheme != canonical_root_url.scheme ||
+        u.host != canonical_root_url.host ||
+        u.port != canonical_root_url.port
+      }
+      target_host_protection_domain_uris = [canonical_root_url] if target_host_protection_domain_uris.empty?
+      shortest_uri = target_host_protection_domain_uris.min_by {|u| u.path.length }
+      protection_domain = [shortest_uri.to_s, 'digest', realm]
+      KeyRing.with_authinfo(protection_domain) {|username, password|
+        a1 = "#{username}:#{realm}:#{password}"
+        ha1 = Digest::MD5.hexdigest(a1)
+        KeyRing.vanish!(a1)
+        HTTPDigestAgent.new(protection_domain_uris, realm, username.dup, nonce, ha1, algorithm, opaque)
+      }
+    end
+
+    def initialize(protection_domain_uris, realm, username, nonce, ha1, algorithm, opaque)
+      @protection_domain_uris = protection_domain_uris
       @realm = realm
       @username = username
       @nonce = nonce
@@ -188,8 +194,9 @@ module WFO
       @opaque = opaque
       @nc = 1
     end
+    attr_reader :protection_domain_uris
 
-    def make_authorization(request)
+    def generate_authorization(request)
       qop = 'auth'
       cnonce = SecRand.base64(18)
       nonce_count = sprintf("%08x", @nc)
