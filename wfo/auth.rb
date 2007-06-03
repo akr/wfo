@@ -139,12 +139,12 @@ module WFO
     realm = params['realm']
     nonce = params['nonce']
     qop = params['qop']
-    algorithm = params['algorithm']
+    algorithm = params['algorithm'] || 'MD5'
 
     return nil if !realm
     return nil if !nonce
     return nil if qop != 'auth'
-    return nil if algorithm != 'MD5'
+    return nil if /\Amd5\z/i !~ algorithm
 
     canonical_root_url = response.uri.dup
     canonical_root_url.path = ""
