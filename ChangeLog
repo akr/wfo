@@ -4,6 +4,8 @@
 
 	* wfo/webclient.rb: use Escape.http_params_with_sep.
 
+	* wfo/auth.rb, wfo/webclient.rb: http authentication framework.
+
 2007-06-02  Tanaka Akira  <akr@fsij.org>
 
 	* secrand.rb: new file.
