@@ -166,7 +166,7 @@ module WFO
 
       return nil if !realm
       return nil if !nonce
-      return nil if qop != 'auth'
+      return nil if qop != 'auth'       # xxx
       return nil if /\Amd5\z/i !~ algorithm
 
       canonical_root_url = uri.dup
@@ -183,14 +183,7 @@ module WFO
       else
         protection_domain_uris = [canonical_root_url]
       end
-      target_host_protection_domain_uris =  protection_domain_uris.reject {|u|
-        u.scheme != canonical_root_url.scheme ||
-        u.host != canonical_root_url.host ||
-        u.port != canonical_root_url.port
-      }
-      target_host_protection_domain_uris = [canonical_root_url] if target_host_protection_domain_uris.empty?
-      shortest_uri = target_host_protection_domain_uris.min_by {|u| u.path.length }
-      protection_domain = [shortest_uri.to_s, 'digest', realm]
+      protection_domain = KeyRing.http_protection_domain(uri, 'digest', realm)
       KeyRing.with_authinfo(protection_domain) {|username, password|
         a1 = "#{username}:#{realm}:#{password}"
         ha1 = Digest::MD5.hexdigest(a1)
