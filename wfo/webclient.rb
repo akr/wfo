@@ -51,61 +51,45 @@ class WFO::WebClient
   end
 
   def initialize
-    @basic_credentials = {}
-    @digest_credentials = {}
+    @auth_agents = {}
     @cookies = {}
   end
 
-  def add_basic_credential(agent)
-    canonical_root_url = agent.canonical_root_url
-    @basic_credentials[canonical_root_url] ||= []
-    @basic_credentials[canonical_root_url] << agent
-  end
-
-  def make_request_basic_authenticated(request)
-    canonical_root_url = request.uri.dup
-    canonical_root_url.path = ""
-    canonical_root_url.query = nil
-    canonical_root_url.fragment = nil
-    canonical_root_url = canonical_root_url.to_s
-    return if !@basic_credentials[canonical_root_url]
-    path = request.uri.path
-    @basic_credentials[canonical_root_url].each {|agent|
-      if agent.path_pat =~ path
-        request['Authorization'] = agent.generate_authorization(request)
-        break
-      end
-    }
-  end
-
-  def add_digest_credential(agent)
-    protection_domain_uris = agent.protection_domain_uris
-    protection_domain_uris.each {|uri|
-      canonical_root_url = uri.dup
-      canonical_root_url.path = ""
-      canonical_root_url.query = nil
-      canonical_root_url.fragment = nil
-      canonical_root_url = canonical_root_url.to_s
+  def register_http_auth_agent(agent)
+    agent.each_protection_domain_uri {|uri|
+      canonical_root_uri = uri.dup
+      canonical_root_uri.path = ""
+      canonical_root_uri.query = nil
+      canonical_root_uri.fragment = nil
+      canonical_root_uri = canonical_root_uri.to_s
       path_pat = /\A#{Regexp.quote uri.path}/
-      @digest_credentials[canonical_root_url] ||= []
-      @digest_credentials[canonical_root_url] << [path_pat, agent]
+      @auth_agents[canonical_root_uri] ||= []
+      @auth_agents[canonical_root_uri] << [path_pat, agent]
     }
   end
 
-  def make_request_digest_authenticated(request)
+  def make_request_http_authenticated(request)
     canonical_root_url = request.uri.dup
     canonical_root_url.path = ""
     canonical_root_url.query = nil
     canonical_root_url.fragment = nil
     canonical_root_url = canonical_root_url.to_s
-    return if !@digest_credentials[canonical_root_url]
+    agents = @auth_agents[canonical_root_url]
+    return if !agents
     path = request.uri.path
-    @digest_credentials[canonical_root_url].each_with_index {|(path_pat, agent), i|
+    agent = nil
+    matchlen = -1
+    agents.each {|path_pat, a|
       if path_pat =~ path
-        request['Authorization'] = agent.generate_authorization(request)
-        break
+        if matchlen < $&.length
+          agent = a
+          matchlen = $&.length
+        end
       end
     }
+    if agent
+      request['Authorization'] = agent.generate_authorization(request)
+    end
   end
 
   def update_cookies(uri, set_cookie_field)
@@ -159,8 +143,7 @@ class WFO::WebClient
   end
 
   def do_request_state(request)
-    make_request_basic_authenticated(request)
-    make_request_digest_authenticated(request)
+    make_request_http_authenticated(request)
     insert_cookie_header(request)
     resp = do_request_simple(request)
     update_cookies(request.uri, resp['Set-Cookie']) if resp['Set-Cookie']

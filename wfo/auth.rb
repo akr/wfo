@@ -116,13 +116,6 @@ module WFO::Auth
 end
 
 module WFO
-  def Auth.http_auth_basic(webclient, response, params)
-    agent = HTTPBasicAuthAgent.www_authenticate(response.uri, params)
-    return nil if !agent
-    webclient.add_basic_credential(agent)
-    return response.request
-  end
-
   class HTTPBasicAuthAgent
     def self.www_authenticate(uri, params)
       return nil if params.size != 1
@@ -137,11 +130,12 @@ module WFO
         KeyRing.vanish!(user_pass)
         credential.gsub!(/\s+/, '')
         path_pat = /\A#{Regexp.quote uri.path.sub(%r{[^/]*\z}, '')}/
-        HTTPBasicAuthAgent.new(canonical_root_url, realm, path_pat, credential)
+        HTTPBasicAuthAgent.new(uri, canonical_root_url, realm, path_pat, credential)
       }
     end
 
-    def initialize(canonical_root_url, realm, path_pat, credential)
+    def initialize(uri, canonical_root_url, realm, path_pat, credential)
+      @uri = uri
       @canonical_root_url = canonical_root_url
       @realm = realm
       @path_pat = path_pat
@@ -149,16 +143,17 @@ module WFO
     end
     attr_reader :canonical_root_url, :path_pat
 
+    def each_protection_domain_uri
+      uri = @uri.dup
+      uri.path = uri.path.sub(%r{[^/]*\z}, '')
+      uri.query = nil
+      uri.fragment = nil
+      yield uri
+    end
+
     def generate_authorization(request)
       "Basic #{@credential}"
     end
-  end
-
-  def Auth.http_auth_digest(webclient, response, params)
-    agent = HTTPDigestAuthAgent.www_authenticate(response.uri, params)
-    return nil if !agent
-    webclient.add_digest_credential(agent)
-    return response.request
   end
 
   class HTTPDigestAuthAgent
@@ -216,6 +211,10 @@ module WFO
     end
     attr_reader :protection_domain_uris
 
+    def each_protection_domain_uri
+      @protection_domain_uris.each {|uri| yield uri }
+    end
+
     def generate_authorization(request)
       qop = 'auth'
       cnonce = SecRand.base64(18)
@@ -241,11 +240,11 @@ module WFO
     end
   end
 
-  HTTPAuthSchemeStrength = {
-    'basic' => 1,
-    'digest' => 2,
+  HTTPAuthScheme = {
+    'basic' => [1, HTTPBasicAuthAgent],
+    'digest' => [2, HTTPDigestAuthAgent],
   }
-  HTTPAuthSchemeStrength.default = -1
+  HTTPAuthScheme.default = [-1, nil]
     
   def Auth.http_auth_handler(webclient, response)
     unless response.code == '401' &&
@@ -267,12 +266,16 @@ module WFO
       end
       [as.downcase, params]
     }
-    challenge = challenges.max_by {|as, _| HTTPAuthSchemeStrength[as] }
+    challenge = challenges.max_by {|as, _| HTTPAuthScheme[as].first }
 
     auth_scheme, params = challenge
-    return nil if HTTPAuthSchemeStrength[auth_scheme] < 0
+    strength, agent_class = HTTPAuthScheme[auth_scheme]
+    return nil if strength < 0
 
-    self.send("http_auth_#{auth_scheme}", webclient, response, params)
+    agent = agent_class.www_authenticate(response.uri, params)
+    return nil if !agent
+    webclient.register_http_auth_agent(agent)
+    return response.request
   end
 end
 
