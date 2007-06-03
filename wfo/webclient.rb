@@ -84,7 +84,7 @@ class WFO::WebClient
       canonical_root_url.query = nil
       canonical_root_url.fragment = nil
       canonical_root_url = canonical_root_url.to_s
-      path_pat = /\A#{Regexp.quote uri.path.sub(%r{[^/]*\z}, '')}/
+      path_pat = /\A#{Regexp.quote uri.path}/
       @digest_credentials[canonical_root_url] ||= []
       @digest_credentials[canonical_root_url] << [path_pat, agent]
     }
