@@ -1,3 +1,9 @@
+2007-06-03  Tanaka Akira  <akr@fsij.org>
+
+	* escape.rb: update for Escape.http_params_with_sep.
+
+	* wfo/webclient.rb: use Escape.http_params_with_sep.
+
 2007-06-02  Tanaka Akira  <akr@fsij.org>
 
 	* secrand.rb: new file.

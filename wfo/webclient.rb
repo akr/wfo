@@ -101,7 +101,7 @@ class WFO::WebClient
     @digest_credentials[canonical_root_url].each_with_index {|(realm, path_pat, username, nonce, ha1, nc), i|
       if path_pat =~ path
         qop = 'auth'
-        cnonce = SecRand.hex(16)
+        cnonce = SecRand.base64(18)
         nonce_count = sprintf("%08d", nc)
         @digest_credentials[canonical_root_url][i][-1] += 1
         uri = request.uri.request_uri
@@ -109,7 +109,7 @@ class WFO::WebClient
         a2 = "#{method}:#{uri}"
         ha2 = Digest::MD5.hexdigest(a2)
         request_digest = Digest::MD5.hexdigest("#{ha1}:#{nonce}:#{nonce_count}:#{cnonce}:#{qop}:#{ha2}")
-        request['Authorization'] = "Digest username=\"#{username}\", realm=\"#{realm}\", nonce=\"#{nonce}\", uri=\"#{uri}\", qop=#{qop}, cnonce=\"#{cnonce}\", nc=\"#{nonce_count}\", response=\"#{request_digest}\""
+        request['Authorization'] = "Digest #{Escape.http_params_with_sep ', ', 'username', username, 'realm', realm, 'nonce', nonce, 'uri', uri, 'qop', qop, 'cnonce', cnonce, 'nc', nonce_count, 'response', request_digest}"
         break
       end
     }
