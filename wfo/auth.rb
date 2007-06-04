@@ -166,7 +166,14 @@ module WFO
 
       return nil if !realm
       return nil if !nonce
-      return nil if qop != 'auth'       # xxx
+
+      if qop
+        qop_options = qop.strip.split(/\s*,\s*/)
+        return nil unless qop_options.include? 'auth' 
+      else
+        return nil # xxx: not backword compatible for RFC 2069
+      end
+
       return nil if /\Amd5\z/i !~ algorithm
 
       canonical_root_url = uri.dup
