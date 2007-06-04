@@ -1,3 +1,7 @@
+2007-06-04  Tanaka Akira  <akr@fsij.org>
+
+	* wfo/auth.rb: support qop of digest authentication properly.
+
 2007-06-03  Tanaka Akira  <akr@fsij.org>
 
 	* escape.rb: update for Escape.http_params_with_sep.

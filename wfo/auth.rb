@@ -170,8 +170,9 @@ module WFO
       if qop
         qop_options = qop.strip.split(/\s*,\s*/)
         return nil unless qop_options.include? 'auth' 
+        qop = 'auth'
       else
-        return nil # xxx: not backword compatible for RFC 2069
+        qop = nil
       end
 
       return nil if /\Amd5\z/i !~ algorithm
@@ -195,16 +196,17 @@ module WFO
         a1 = "#{username}:#{realm}:#{password}"
         ha1 = Digest::MD5.hexdigest(a1)
         KeyRing.vanish!(a1)
-        HTTPDigestAuthAgent.new(protection_domain_uris, realm, username.dup, nonce, ha1, algorithm, opaque)
+        HTTPDigestAuthAgent.new(protection_domain_uris, realm, username.dup, nonce, ha1, qop, algorithm, opaque)
       }
     end
 
-    def initialize(protection_domain_uris, realm, username, nonce, ha1, algorithm, opaque)
+    def initialize(protection_domain_uris, realm, username, nonce, ha1, qop, algorithm, opaque)
       @protection_domain_uris = protection_domain_uris
       @realm = realm
       @username = username
       @nonce = nonce
       @ha1 = ha1
+      @qop = qop
       @algorithm = algorithm
       @opaque = opaque
       @nc = 1
@@ -216,23 +218,27 @@ module WFO
     end
 
     def generate_authorization(request)
-      qop = 'auth'
-      cnonce = SecRand.base64(18)
-      nonce_count = sprintf("%08x", @nc)
-      @nc += 1
       digest_uri = request.uri.request_uri
       method = request.http_method
       a2 = "#{method}:#{digest_uri}"
       ha2 = Digest::MD5.hexdigest(a2)
-      request_digest = Digest::MD5.hexdigest("#{@ha1}:#{@nonce}:#{nonce_count}:#{cnonce}:#{qop}:#{ha2}")
+      if @qop
+        cnonce = SecRand.base64(18)
+        nonce_count = sprintf("%08x", @nc)
+        @nc += 1
+        request_digest = Digest::MD5.hexdigest("#{@ha1}:#{@nonce}:#{nonce_count}:#{cnonce}:#{@qop}:#{ha2}")
+      else
+        request_digest = Digest::MD5.hexdigest("#{@ha1}:#{@nonce}:#{ha2}")
+      end
+
       auth = "Digest"
       auth << " username=#{Escape.http_quoted_string @username}"
       auth << ", realm=#{Escape.http_quoted_string @realm}"
       auth << ", nonce=#{Escape.http_quoted_string @nonce}"
       auth << ", uri=#{Escape.http_parameter_value digest_uri}"
-      auth << ", qop=#{Escape.http_parameter_value qop}"
-      auth << ", cnonce=#{Escape.http_quoted_string cnonce}"
-      auth << ", nc=#{Escape.http_parameter_value nonce_count}"
+      auth << ", qop=#{Escape.http_parameter_value @qop}" if @qop
+      auth << ", cnonce=#{Escape.http_quoted_string cnonce}" if @qop
+      auth << ", nc=#{Escape.http_parameter_value nonce_count}" if @qop
       auth << ", response=#{Escape.http_quoted_string request_digest}"
       auth << ", algorithm=#{Escape.http_parameter_value @algorithm}" if @algorithm
       auth << ", opaque=#{Escape.http_quoted_string @opaque}" if @opaque
