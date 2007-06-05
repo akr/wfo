@@ -143,7 +143,28 @@ class WFO::WebClient
   end
 
   def do_request_state(request)
-    make_request_http_authenticated(request)
+    while true
+      make_request_http_authenticated(request)
+      resp = do_request_cookie(request)
+      break if resp.code == '200' &&
+               WFO::Auth.reqauth_checker.all? {|checker|
+                 !checker.call(self, resp)
+               }
+      request = nil
+      WFO::Auth.auth_handler.each {|h|
+        if request = h.call(self, resp)
+          break
+        end
+      }
+      if request == nil
+        raise "no handler for #{resp.code} #{resp.message} in #{resp.uri}"
+      end
+    end
+
+    resp
+  end
+
+  def do_request_cookie(request)
     insert_cookie_header(request)
     resp = do_request_simple(request)
     update_cookies(request.uri, resp['Set-Cookie']) if resp['Set-Cookie']
@@ -183,22 +204,7 @@ class WFO::WebClient
     request = WFO::ReqHTTP.get(uri)
     header.each {|k, v| request[k] = v }
 
-    while true
-      response = do_request(request)
-      break if response.code == '200' &&
-               WFO::Auth.reqauth_checker.all? {|checker|
-                 !checker.call(self, response)
-               }
-      request = nil
-      WFO::Auth.auth_handler.each {|h|
-        if request = h.call(self, response)
-          break
-        end
-      }
-      if request == nil
-        raise "no handler for #{response.code} #{response.message} in #{response.uri}"
-      end
-    end
+    response = do_request(request)
 
     result = response.body
     OpenURI::Meta.init result
