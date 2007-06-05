@@ -49,10 +49,10 @@ class WFO::Repo
       stable_uri = c.find_stable_uri(page)
       return c, stable_uri
     else
-      @repo_classes.each {|c|
-        if c.applicable?(page)
-          stable_uri = c.find_stable_uri(page)
-          return c, stable_uri
+      @repo_classes.each {|k|
+        if k.applicable?(page)
+          stable_uri = k.find_stable_uri(page)
+          return k, stable_uri
         end
       }
     end

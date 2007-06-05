@@ -413,7 +413,7 @@ class KeyRing
     r
   ensure
     if $!
-      r.each {|s| KeyRing.vanish!(s) }
+      r.each {|e| KeyRing.vanish!(e) }
     end
   end
 
