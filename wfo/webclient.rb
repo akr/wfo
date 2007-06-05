@@ -146,7 +146,7 @@ class WFO::WebClient
     while true
       make_request_http_authenticated(request)
       resp = do_request_cookie(request)
-      break if resp.code == '200' &&
+      break if /\A(?:200|301|302|303|307)\z/ =~ resp.code &&
                WFO::Auth.reqauth_checker.all? {|checker|
                  !checker.call(self, resp)
                }
@@ -205,6 +205,9 @@ class WFO::WebClient
     header.each {|k, v| request[k] = v }
 
     response = do_request(request)
+    if response.code != '200'
+      raise "request failed: #{response.code} #{response.message} in #{response.uri}"
+    end
 
     result = response.body
     OpenURI::Meta.init result
