@@ -84,7 +84,7 @@ class WFO::Cookie
 
   def match?(uri)
     return false if @domain_pat !~ uri.host
-    return false if @path_pat !~ uri.path
+    return false if @path_pat !~ uri.request_uri
     return false if @pairs.find {|k, v| /\Asecure\z/i =~ k } && uri.scheme != 'https'
     true
   end

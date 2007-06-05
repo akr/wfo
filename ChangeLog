@@ -5,6 +5,9 @@
 	  (WFO::WebClient#do_request_state, WFO::WebClient#read): move auth
 	  stuff from read to do_request_state.
 
+	* wfo/cookie.rb (WFO::Cookie#match?): http://example.org didn't match
+	  if "Path=/".
+
 2007-06-04  Tanaka Akira  <akr@fsij.org>
 
 	* wfo/auth.rb: support qop of digest authentication properly.
