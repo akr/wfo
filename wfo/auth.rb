@@ -47,12 +47,6 @@ module WFO::Auth
   end
 
   def self.codeblog_auth_handler(webclient, response)
-    uri = response.uri
-    unless response.code == '403' &&
-           ((uri.scheme == 'https' && uri.host == 'www.codeblog.org' && uri.port == 443) ||
-            (uri.scheme == 'http' && uri.host == 'vv.codeblog.org' && uri.port == 80))
-      return nil
-    end
     apache_authtypekey_handler(webclient, response)
   end
 
@@ -264,17 +258,12 @@ module WFO
            response['www-authenticate'] =~ /\A\s*#{Pat::HTTP_ChallengeList}s*\z/n
       return nil
     end
-    lambda { http_auth_handler(webclient, response) }
+    lambda { http_auth_handler(webclient, response, $~) }
   end
 
-  def Auth.http_auth_handler(webclient, response)
-    unless response.code == '401' &&
-           response['www-authenticate'] &&
-           response['www-authenticate'] =~ /\A\s*#{Pat::HTTP_ChallengeList}s*\z/n
-      return nil
-    end
-    challenges = [[$1, $2]]
-    rest = $3
+  def Auth.http_auth_handler(webclient, response, match)
+    challenges = [[match[1], match[2]]]
+    rest = match[3]
     challenges.concat rest.scan(/\s*,\s*#{Pat::HTTP_Challenge}/)
     challenges.map! {|as, r|
       params = {}

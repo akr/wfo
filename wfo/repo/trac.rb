@@ -68,13 +68,6 @@ module WFO::Auth
   def self.trac_auth_handler(webclient, resp)
     uri = resp.uri
 
-    unless %r{<a id="tracpowered" href="http://trac.edgewall.(com|org)/">} =~ resp.body
-      return nil
-    end
-    if resp.code != '403'
-      return nil
-    end
-
     trac_login_uri = nil
     HTree(resp.body).traverse_element("{http://www.w3.org/1999/xhtml}a") {|e|
       if e.extract_text.to_s == "Login"
