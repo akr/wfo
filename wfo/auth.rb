@@ -18,21 +18,17 @@
 
 module WFO::Auth
   @reqauth_checker = []
-  @auth_handler = []
 
   def self.added(name)
     name = name.to_s
     if /_reqauth_checker\z/ =~ name
       @reqauth_checker << method(name)
-    elsif /_auth_handler\z/ =~ name
-      @auth_handler << method(name)
     end
   end
 end
 
 class << WFO::Auth
   attr_reader :reqauth_checker
-  attr_reader :auth_handler
 
   def singleton_method_added(name)
     WFO::Auth.added(name)
@@ -40,6 +36,16 @@ class << WFO::Auth
 end
 
 module WFO::Auth
+  def self.codeblog_reqauth_checker(webclient, response)
+    uri = response.uri
+    unless response.code == '403' &&
+           ((uri.scheme == 'https' && uri.host == 'www.codeblog.org' && uri.port == 443) ||
+            (uri.scheme == 'http' && uri.host == 'vv.codeblog.org' && uri.port == 80))
+      return nil
+    end
+    lambda { codeblog_auth_handler(webclient, response) }
+  end
+
   def self.codeblog_auth_handler(webclient, response)
     uri = response.uri
     unless response.code == '403' &&
@@ -252,6 +258,15 @@ module WFO
   }
   HTTPAuthScheme.default = [-1, nil]
     
+  def Auth.http_auth_reqauth_checker(webclient, response)
+    unless response.code == '401' &&
+           response['www-authenticate'] &&
+           response['www-authenticate'] =~ /\A\s*#{Pat::HTTP_ChallengeList}s*\z/n
+      return nil
+    end
+    lambda { http_auth_handler(webclient, response) }
+  end
+
   def Auth.http_auth_handler(webclient, response)
     unless response.code == '401' &&
            response['www-authenticate'] &&

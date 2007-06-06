@@ -55,6 +55,16 @@ class WFO::Trac < WFO::Repo
 end
 
 module WFO::Auth
+  def self.trac_reqauth_checker(webclient, resp)
+    unless %r{<a id="tracpowered" href="http://trac.edgewall.(com|org)/">} =~ resp.body
+      return nil
+    end
+    if resp.code != '403'
+      return nil
+    end
+    lambda { trac_auth_handler(webclient, resp) }
+  end
+
   def self.trac_auth_handler(webclient, resp)
     uri = resp.uri
 

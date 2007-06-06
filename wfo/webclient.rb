@@ -146,22 +146,18 @@ class WFO::WebClient
     while true
       make_request_http_authenticated(request)
       resp = do_request_cookie(request)
-      break if /\A(?:200|301|302|303|307)\z/ =~ resp.code &&
-               WFO::Auth.reqauth_checker.all? {|checker|
-                 !checker.call(self, resp)
-               }
-      request = nil
-      WFO::Auth.auth_handler.each {|h|
-        if request = h.call(self, resp)
-          break
-        end
+      checker_results = WFO::Auth.reqauth_checker.map {|checker|
+        checker.call(self, resp)
       }
-      if request == nil
-        raise "no handler for #{resp.code} #{resp.message} in #{resp.uri}"
+      checker_results.compact!
+      return resp if checker_results.empty?
+      if 1 < checker_results.length
+        warn "more than one authhandler"
+      end
+      if !checker_results.first.call
+        raise "authhandler failed: #{resp.code} #{resp.message} in #{resp.uri}"
       end
     end
-
-    resp
   end
 
   def do_request_cookie(request)

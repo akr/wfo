@@ -1,3 +1,20 @@
+2007-06-06  Tanaka Akira  <akr@fsij.org>
+
+	* wfo/webclient.rb (WFO::WebClient#do_request_state): use
+	  reqauth_checker as a auth_handler generator.
+	  reqauth_checker is required now.
+
+	* wfo/auth.rb (WFO::Auth): @auth_handler removed.
+	  (WFO::Auth.added): @auth_handler removed.
+	  (WFO::Auth.auth_handler): removed.
+	  (WFO::Auth.codeblog_reqauth_checker): new method.
+	  (WFO::Auth.http_auth_reqauth_checker): ditto.
+
+	* wfo/repo/trac.rb (WFO::Auth.trac_reqauth_checker): new method.
+
+	* wfo/repo/qwik.rb (WFO::Auth.qwik_reqauth_checker): return a proc to
+	  call qwik_auth_handler.
+
 2007-06-05  Tanaka Akira  <akr@fsij.org>
 
 	* wfo/webclient.rb (WFO::WebClient#do_request_cookie): new method

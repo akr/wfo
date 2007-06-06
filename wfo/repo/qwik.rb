@@ -66,7 +66,10 @@ end
 
 module WFO::Auth
   def self.qwik_reqauth_checker(webclient, resp)
-    %r{<a href=".login"\n>Login</a\n>} =~ resp.body
+    if %r{<a href=".login"\n>Login</a\n>} !~ resp.body
+      return nil
+    end
+    lambda { qwik_auth_handler(webclient, resp) }
   end
 
   def self.qwik_auth_handler(webclient, resp)
