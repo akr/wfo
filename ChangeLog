@@ -1,3 +1,7 @@
+2007-06-15  Tanaka Akira  <akr@fsij.org>
+
+	* secrand.rb (Integer#chr): complementary definition removed.
+
 2007-06-06  Tanaka Akira  <akr@fsij.org>
 
 	* wfo/webclient.rb (WFO::WebClient#do_request_state): use

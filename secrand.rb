@@ -71,12 +71,6 @@ module SecRand
 end
 
 class Integer
-  def chr
-    self
-  end
-end unless defined? 0.chr
-
-class Integer
   def ord
     self
   end
