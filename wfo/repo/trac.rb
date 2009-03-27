@@ -29,8 +29,8 @@ class WFO::Trac < WFO::Repo
     u
   end
 
-  def self.make_accessor(uri)
-    page_str, orig_charset = WFO::WebClient.read_decode(uri)
+  def self.make_accessor(uri, verify)
+    page_str, orig_charset = WFO::WebClient.read_decode(uri, verify)
     page_tree = HTree(page_str)
     if page_str.last_request_uri != uri
       raise "Trac edit page redirected"
@@ -55,17 +55,17 @@ class WFO::Trac < WFO::Repo
 end
 
 module WFO::Auth
-  def self.trac_reqauth_checker(webclient, resp)
+  def self.trac_reqauth_checker(webclient, resp, verify)
     unless %r{<a id="tracpowered" href="http://trac.edgewall.(com|org)/">} =~ resp.body
       return nil
     end
     if resp.code != '403'
       return nil
     end
-    lambda { trac_auth_handler(webclient, resp) }
+    lambda { trac_auth_handler(webclient, resp, verify) }
   end
 
-  def self.trac_auth_handler(webclient, resp)
+  def self.trac_auth_handler(webclient, resp, verify)
     uri = resp.uri
 
     trac_login_uri = nil
@@ -76,7 +76,7 @@ module WFO::Auth
       end
     }
     return nil if !trac_login_uri
-    webclient.read(trac_login_uri)
+    webclient.read(trac_login_uri, verify)
 
     return WFO::ReqHTTP.get(uri)
   end

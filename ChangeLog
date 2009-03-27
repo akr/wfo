@@ -1,3 +1,7 @@
+2009-03-27  Masatake YAMATO <yamato@redhat.com>
+
+	* wfo/: new option -a to disable cert verify.
+
 2007-06-15  Tanaka Akira  <akr@fsij.org>
 
 	* secrand.rb (Integer#chr): complementary definition removed.

@@ -34,8 +34,8 @@ class WFO::WebClient
     end
   end
 
-  def self.read(uri, opts={})
-    Thread.current[:webclient].read(uri, opts)
+  def self.read(uri, verify, opts={})
+    Thread.current[:webclient].read(uri, verify, opts)
   end
 
   def self.read_decode(uri, opts={})
@@ -46,8 +46,8 @@ class WFO::WebClient
     Thread.current[:webclient].read_decode_nocheck(uri, opts)
   end
 
-  def self.do_request(request)
-    Thread.current[:webclient].do_request(request)
+  def self.do_request(request, verify)
+    Thread.current[:webclient].do_request(request, verify)
   end
 
   def initialize
@@ -107,15 +107,15 @@ class WFO::WebClient
     end
   end
 
-  def do_request(request)
-    results = do_redirect_requests(request)
+  def do_request(request, verify)
+    results = do_redirect_requests(request, verify)
     results.last.last
   end
 
-  def do_redirect_requests(request)
+  def do_redirect_requests(request, verify)
     results = []
     while true
-      response = do_request_state(request)
+      response = do_request_state(request, verify)
       results << [request, response]
       if /\A(?:301|302|303|307)\z/ =~ response.code && response['location']
         # RFC 1945 - Hypertext Transfer Protocol -- HTTP/1.0
@@ -142,12 +142,12 @@ class WFO::WebClient
     results
   end
 
-  def do_request_state(request)
+  def do_request_state(request, verify)
     while true
       make_request_http_authenticated(request)
-      resp = do_request_cookie(request)
+      resp = do_request_cookie(request, verify)
       checker_results = WFO::Auth.reqauth_checker.map {|checker|
-        checker.call(self, resp)
+        checker.call(self, resp, verify)
       }
       checker_results.compact!
       return resp if checker_results.empty?
@@ -160,14 +160,14 @@ class WFO::WebClient
     end
   end
 
-  def do_request_cookie(request)
+  def do_request_cookie(request, verify)
     insert_cookie_header(request)
-    resp = do_request_simple(request)
+    resp = do_request_simple(request, verify)
     update_cookies(request.uri, resp['Set-Cookie']) if resp['Set-Cookie']
     resp
   end
 
-  def do_request_simple(req)
+  def do_request_simple(req, verify)
     if proxy_uri = req.uri.find_proxy
       # xxx: proxy authentication
       klass = Net::HTTP::Proxy(proxy_uri.host, proxy_uri.port)
@@ -177,7 +177,10 @@ class WFO::WebClient
     h = klass.new(req.uri.host, req.uri.port)
     if req.uri.scheme == 'https'
       h.use_ssl = true
-      h.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      # TODO: This must be generic.
+      if verify
+        h.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      end
       store = OpenSSL::X509::Store.new
       store.set_default_paths
       h.cert_store = store
@@ -196,11 +199,11 @@ class WFO::WebClient
     }
   end
 
-  def read(uri, header={})
+  def read(uri, verify, header={})
     request = WFO::ReqHTTP.get(uri)
     header.each {|k, v| request[k] = v }
 
-    response = do_request(request)
+    response = do_request(request, verify)
     if response.code != '200'
       raise "request failed: #{response.code} #{response.message} in #{response.uri}"
     end
@@ -213,8 +216,8 @@ class WFO::WebClient
     result
   end
 
-  def read_decode(uri, header={})
-    page_str = self.read(uri, header)
+  def read_decode(uri, verify, header={})
+    page_str = self.read(uri, verify, header)
     unless charset = page_str.charset
       charset = page_str.guess_charset
     end
@@ -227,8 +230,8 @@ class WFO::WebClient
     return result, charset
   end
 
-  def read_decode_nocheck(uri, header={})
-    page_str = self.read(uri, header)
+  def read_decode_nocheck(uri, verify, header={})
+    page_str = self.read(uri, verify, header)
     unless charset = page_str.charset
       charset = page_str.guess_charset
     end
