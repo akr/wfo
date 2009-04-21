@@ -21,10 +21,11 @@ http://www.a-k-r.org/wfo/
 
 == Feature
 
-* checkout a wiki page as a local file
-* edit the file
-* update the file
-* commit the file to the wiki
+* cvs/svn like workflow
+  * checkout a wiki page as a local file
+  * edit the file using your favorite editor
+  * update the file
+  * commit the file to the wiki
 * supported wiki and blog systems:
   * qwikWeb
   * Trac's wiki
