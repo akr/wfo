@@ -1,3 +1,8 @@
+Mon May  4 04:39:53 2009  Tanaka Akira  <akr@fsij.org>
+
+	* wfo/cookie.rb (WFO::Cookie#initialize): support domains which
+	  doesn't start with a dot.
+
 Mon May  4 04:07:14 2009  Tanaka Akira  <akr@fsij.org>
 
 	* wfo/repo/qwik.rb (WFO::Auth.qwik_auth_handler_typekey): support

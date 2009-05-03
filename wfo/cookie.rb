@@ -52,11 +52,10 @@ class WFO::Cookie
     if !pair || /\A\d+(?:\.\d+)+\z/ =~ request_uri.host
       @domain = request_uri.host
       @domain_pat = /\A#{Regexp.quote @domain}\z/i
-    else
-      cookie_domain = pair[1]
-      if /\A\./ !~ cookie_domain
-        raise ArgumentError, "An cookie domain not started with a dot: #{cookie_domain}"
-      end
+    elsif /\A\./ =~ (cookie_domain = pair[1])
+      # An explicitly specified domain must always start
+      # with a dot.
+      # [RFC 2109 4.2.2]
       if /\..*\./ !~ cookie_domain
         raise ArgumentError, "An cookie domain needs more dots: #{cookie_domain}"
       end
@@ -65,6 +64,17 @@ class WFO::Cookie
       end
       @domain = cookie_domain
       @domain_pat = /#{Regexp.quote cookie_domain}\z/i
+    else
+      # support domains which violate RFC 2109.
+      if /\./ !~ cookie_domain
+        raise ArgumentError, "An cookie domain needs more dots: #{cookie_domain}"
+      end
+      pat = /(?:\A|\.)#{Regexp.quote cookie_domain}\z/i
+      if pat !~ request_uri.host
+        raise ArgumentError, "An cookie domain is not match: #{cookie_domain} is not suffix of #{request_uri.host}"
+      end
+      @domain = cookie_domain
+      @domain_pat = pat
     end
     pair = @pairs.find {|k, v| /\Apath\z/i =~ k }
     if !pair
