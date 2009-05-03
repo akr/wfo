@@ -257,7 +257,30 @@ module WFO
       @header = header
       @body = body
     end
-    attr_reader :uri
+    attr_reader :uri, :body
+
+    def pretty_print(q)
+      q.object_group(self) {
+        q.breakable
+        q.text @method
+        q.breakable
+        q.text @uri.to_s
+        @header.each {|n,v|
+          q.breakable
+          q.text n
+          q.text ": "
+          q.text v
+        }
+        if @body
+          @body.each_line {|line|
+            q.breakable
+            q.text line
+          }
+        end
+      }
+    end
+
+    alias inspect pretty_print_inspect
 
     def http_method
       @method
@@ -267,13 +290,19 @@ module WFO
       @header[field_name] = field_value
     end
 
+    def each_header
+      @header.each {|k,v| yield k, v }
+    end
+
     def do_http(http)
       case @method
       when "GET"
         req = Net::HTTP::Get.new(@uri.request_uri)
         @header.each {|field_name, field_value| req[field_name] = field_value }
+        #pp self
         resp = http.request(req)
         result = WFO::RespHTTP.new(self, resp)
+        #pp result
       when "POST"
         req = Net::HTTP::Post.new(@uri.request_uri)
         @header.each {|field_name, field_value| req[field_name] = field_value }
@@ -292,6 +321,47 @@ module WFO
       @resp = resp
     end
     attr_reader :request
+
+    def pretty_print(q)
+      q.object_group(self) {
+        q.breakable
+        q.group {
+          q.text @request.http_method
+          q.breakable
+          q.text @request.uri.to_s
+        }
+        @request.each_header {|n,v|
+          q.breakable
+          q.text n
+          q.text ": "
+          q.text v.inspect
+        }
+        if @request.body
+          @request.body.each_line {|line|
+            q.breakable
+            q.text line
+          }
+        end
+        q.breakable
+        q.group {
+          q.text @resp.code
+          q.breakable
+          q.text @resp.message
+        }
+        @resp.canonical_each {|k, v|
+          q.breakable
+          q.text k
+          q.text ': '
+          q.text v.inspect
+        }
+        if @resp.body
+          @resp.body.each_line {|line|
+            q.breakable
+            q.text line.inspect
+          }
+        end
+      }
+    end
 
     def uri
       @request.uri

@@ -1,3 +1,10 @@
+Sun May  3 22:04:15 2009  Tanaka Akira  <akr@fsij.org>
+
+	* wfo/webclient.rb (WFO::ReqHTTP#body): defined.
+	  (WFO::ReqHTTP#pretty_print): defined.
+	  (WFO::ReqHTTP#each_header): defined.
+	  (WFO::RespHTTP#pretty_print): defined.
+
 2009-03-27  Masatake YAMATO <yamato@redhat.com>
 
 	* wfo/: new option -a to disable cert verify.
