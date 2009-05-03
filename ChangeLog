@@ -1,3 +1,8 @@
+Mon May  4 04:06:05 2009  Tanaka Akira  <akr@fsij.org>
+
+	* wfo/auth.rb (WFO::Auth.typekey_login): use webclient to grab the
+	  login page. 
+
 Sun May  3 22:04:15 2009  Tanaka Akira  <akr@fsij.org>
 
 	* wfo/webclient.rb (WFO::ReqHTTP#body): defined.

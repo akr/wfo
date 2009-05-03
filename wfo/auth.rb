@@ -79,7 +79,8 @@ module WFO::Auth
 
   def self.typekey_login(webclient, typekey_uri)
     typekey_login_form = nil
-    HTree(typekey_uri).traverse_element('{http://www.w3.org/1999/xhtml}form') {|form|
+    typekey_page = webclient.read(typekey_uri, true)
+    HTree(typekey_page).traverse_element('{http://www.w3.org/1999/xhtml}form') {|form|
       form = WFO::Form.make(form, typekey_uri)
       if form.has?('username') && form.has?('password')
         typekey_login_form = form
