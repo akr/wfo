@@ -89,7 +89,8 @@ module WFO::Auth
     if resp.code == '200'
       qwik_typekey_uri = nil
       HTree(resp.body).traverse_element("{http://www.w3.org/1999/xhtml}a") {|e|
-        if e.extract_text.to_s == "Login by TypeKey"
+        if e.extract_text.to_s == "Login by TypeKey" ||
+           e.extract_text.to_s == "Log in by TypeKey"
           qwik_typekey_uri = qwik_login_uri + e.get_attr('href')
         end
       }
