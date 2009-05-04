@@ -91,17 +91,18 @@ End
 
   def do_checkout(argv)
     opt = OptionParser.new
-    opt.banner = 'Usage: wfo checkout [-a] [-t repo_type] URL [local-filename][.ext]'
+    opt.banner = 'Usage: wfo checkout [--disable-ssl-verify] [-t repo_type] URL [local-filename][.ext]'
     opt_t = nil; opt.def_option('-t repo_type', "repository type (#{Repo.available_types})") {|v|
       opt_t = v
     }
-    opt_a = false; opt.def_option('-a', "accept self-signed certificate") {
-      opt_a = true
+    opt_disable_ssl_verify = false
+    opt.def_option('--disable-ssl-verify', "disable SSL certificate verification") {
+      opt_disable_ssl_verify = true
     }
     opt.def_option('-h', 'help') { puts opt; exit 0 }
     opt.parse!(argv)
     WebClient.do {
-      WFO::WebClient.ssl_verify_default = false if !opt_a
+      WFO::WebClient.ssl_verify_default = false if !opt_disable_ssl_verify
       url = URI(argv.shift)
       local_filename_arg = argv.shift
       if !local_filename_arg
@@ -193,14 +194,15 @@ End
 
   def do_update(argv)
     opt = OptionParser.new
-    opt.banner = 'Usage: wfo update [-a] [local-filename...]'
-    opt_a = false; opt.def_option('-a', "accept self-signed certificate") {
-      opt_a = true
+    opt.banner = 'Usage: wfo update [--disable-ssl-verify] [local-filename...]'
+    opt_disable_ssl_verify = false
+    opt.def_option('--disable-ssl-verify', "disable SSL certificate verification") {
+      opt_disable_ssl_verify = true
     }
     opt.def_option('-h', 'help') { puts opt; exit 0 }
     opt.parse!(argv)
     WebClient.do {
-      WFO::WebClient.ssl_verify_default = false if !opt_a
+      WFO::WebClient.ssl_verify_default = false if !opt_disable_ssl_verify
       ws = argv_to_workareas(argv)
       ws.each {|w|
         accessor = w.make_accessor
@@ -263,14 +265,15 @@ End
 
   def do_commit(argv)
     opt = OptionParser.new
-    opt.banner = 'Usage: wfo commit [-a] [local-filename...]'
-    opt_a = false; opt.def_option('-a', "accept self-signed certificate") {
-      opt_a = true
+    opt.banner = 'Usage: wfo commit [--disable-ssl-verify] [local-filename...]'
+    opt_disable_ssl_verify = false
+    opt.def_option('--disable-ssl-verify', "disable SSL certificate verification") {
+      opt_disable_ssl_verify = true
     }
     opt.def_option('-h', 'help') { puts opt; exit 0 }
     opt.parse!(argv)
     WebClient.do {
-      WFO::WebClient.ssl_verify_default = false if !opt_a
+      WFO::WebClient.ssl_verify_default = false if !opt_disable_ssl_verify
       ws = argv_to_workareas(argv)
       ws.reject! {|w| !w.modified? }
       up_to_date = true

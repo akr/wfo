@@ -1,3 +1,7 @@
+Mon May  4 21:56:40 2009  Tanaka Akira  <akr@fsij.org>
+
+	* wfo/main.rb: change -a to --disable-ssl-verify.
+
 Mon May  4 21:49:38 2009  Tanaka Akira  <akr@fsij.org>
 
 	* wfo/webclient.rb: use @ssl_verify_default to keep SSL verification
