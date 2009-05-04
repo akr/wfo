@@ -34,8 +34,8 @@ class WFO::TDiary < WFO::Repo
     end
   end
 
-  def self.make_accessor(uri, version)
-    page_str, orig_charset = WFO::WebClient.read_decode_nocheck(uri, veirfy)
+  def self.make_accessor(uri)
+    page_str, orig_charset = WFO::WebClient.read_decode_nocheck(uri)
     page_tree = HTree(page_str)
     if page_str.last_request_uri != uri
       raise "tDiary update page redirected"

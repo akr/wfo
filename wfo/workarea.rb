@@ -54,8 +54,8 @@ class WFO::WorkArea
   end
   attr_reader :filename, :url
 
-  def make_accessor(verify)
-    WFO::Repo.fetch_class(@info['repository_type']).make_accessor(@info['URL'], verify)
+  def make_accessor
+    WFO::Repo.fetch_class(@info['repository_type']).make_accessor(@info['URL'])
   end
 
   def store

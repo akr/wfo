@@ -101,6 +101,7 @@ End
     opt.def_option('-h', 'help') { puts opt; exit 0 }
     opt.parse!(argv)
     WebClient.do {
+      WFO::WebClient.ssl_verify_default = false if !opt_a
       url = URI(argv.shift)
       local_filename_arg = argv.shift
       if !local_filename_arg
@@ -117,8 +118,8 @@ End
           err "local file already exists : #{local_filename.inspect}"
         end
       end
-      repo_class, stable_uri = Repo.find_class_and_stable_uri(url, !opt_a, opt_t)
-      accessor = repo_class.make_accessor(stable_uri, !opt_a)
+      repo_class, stable_uri = Repo.find_class_and_stable_uri(url, opt_t)
+      accessor = repo_class.make_accessor(stable_uri)
 
       if !local_filename
         local_filename = make_local_filename(accessor.recommended_filename, extname)
@@ -199,9 +200,10 @@ End
     opt.def_option('-h', 'help') { puts opt; exit 0 }
     opt.parse!(argv)
     WebClient.do {
+      WFO::WebClient.ssl_verify_default = false if !opt_a
       ws = argv_to_workareas(argv)
       ws.each {|w|
-        accessor = w.make_accessor(!opt_a)
+        accessor = w.make_accessor
         remote_text = accessor.current_text
         local_text = w.local_text
         original_text = w.original_text
@@ -268,12 +270,13 @@ End
     opt.def_option('-h', 'help') { puts opt; exit 0 }
     opt.parse!(argv)
     WebClient.do {
+      WFO::WebClient.ssl_verify_default = false if !opt_a
       ws = argv_to_workareas(argv)
       ws.reject! {|w| !w.modified? }
       up_to_date = true
       as = []
       ws.each {|w|
-        accessor = w.make_accessor(!opt_a)
+        accessor = w.make_accessor
         remote_text = accessor.current_text
         local_text = w.local_text
         original_text = w.original_text
@@ -286,8 +289,8 @@ End
       exit 1 if !up_to_date
       as.each {|w, accessor, local_text|
         accessor.replace_text local_text
-        accessor.commit(!opt_a)
-        accessor2 = accessor.reload(!opt_a)
+        accessor.commit
+        accessor2 = accessor.reload
         if accessor2.current_text != local_text
           backup_filename = w.make_backup(local_text)
           puts "commited not exactly.  local file backup: #{backup_filename}"

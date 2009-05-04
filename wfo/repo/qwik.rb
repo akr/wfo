@@ -39,8 +39,8 @@ class WFO::Qwik < WFO::Repo
     raise "edit page could not find : #{last_request_uri}"
   end
 
-  def self.make_accessor(uri, verify)
-    page_str, orig_charset = WFO::WebClient.read_decode(uri, verify)
+  def self.make_accessor(uri)
+    page_str, orig_charset = WFO::WebClient.read_decode(uri)
     page_tree = HTree(page_str)
     if page_str.last_request_uri != uri
       raise "qwikWeb edit page redirected"
@@ -65,7 +65,7 @@ class WFO::Qwik < WFO::Repo
 end
 
 module WFO::Auth
-  def self.qwik_reqauth_checker(webclient, resp, verify)
+  def self.qwik_reqauth_checker(webclient, resp)
     if %r{<a href=".login"\n>Login</a\n>} !~ resp.body
       return nil
     end

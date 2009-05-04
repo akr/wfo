@@ -27,8 +27,8 @@ class WFO::TextArea < WFO::Repo
     u = page.last_request_uri
   end
 
-  def self.make_accessor(uri, verify)
-    page_str, orig_charset = WFO::WebClient.read_decode(uri, verify)
+  def self.make_accessor(uri)
+    page_str, orig_charset = WFO::WebClient.read_decode(uri)
     page_tree = HTree(page_str)
     form, textarea_name = find_textarea_form(page_tree, orig_charset)
     self.new(form, uri, textarea_name, nil)

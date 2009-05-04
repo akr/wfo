@@ -42,8 +42,8 @@ class WFO::Repo
     raise "repository class not found: #{type}"
   end
 
-  def self.find_class_and_stable_uri(url, verify, type=nil)
-    page = WFO::WebClient.read(url, verify)
+  def self.find_class_and_stable_uri(url, type=nil)
+    page = WFO::WebClient.read(url)
     if type
       c = fetch_class(type)
       stable_uri = c.find_stable_uri(page)
@@ -59,9 +59,9 @@ class WFO::Repo
     raise "unknown repository type : #{url}"
   end
 
-  def self.make_accessor(url, verify, type=nil)
-    c, stable_uri = find_class_and_stable_uri(url, verify, type)
-    return c.make_accessor(stable_uri, verify)
+  def self.make_accessor(url, type=nil)
+    c, stable_uri = find_class_and_stable_uri(url, type)
+    return c.make_accessor(stable_uri)
   end
 end
 
@@ -82,15 +82,15 @@ module WFO::RepoTextArea
     @form.set(@textarea_name, text)
   end
 
-  def commit(verify)
+  def commit
     req = @form.make_request(@submit_name)
-    resp = WFO::WebClient.do_request(req, verify)
+    resp = WFO::WebClient.do_request(req)
     return if resp.code == '200'
     raise "HTTP POST error: #{resp.code} #{resp.message}"
   end
 
-  def reload(verify)
-    self.class.make_accessor(@uri, verify)
+  def reload
+    self.class.make_accessor(@uri)
   end
 end
 

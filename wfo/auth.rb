@@ -36,7 +36,7 @@ class << WFO::Auth
 end
 
 module WFO::Auth
-  def self.codeblog_reqauth_checker(webclient, response, verify)
+  def self.codeblog_reqauth_checker(webclient, response)
     uri = response.uri
     unless response.code == '403' &&
            ((uri.scheme == 'https' && uri.host == 'www.codeblog.org' && uri.port == 443) ||
@@ -79,7 +79,7 @@ module WFO::Auth
 
   def self.typekey_login(webclient, typekey_uri)
     typekey_login_form = nil
-    typekey_page = webclient.read(typekey_uri, true)
+    typekey_page = webclient.read(typekey_uri)
     HTree(typekey_page).traverse_element('{http://www.w3.org/1999/xhtml}form') {|form|
       form = WFO::Form.make(form, typekey_uri)
       if form.has?('username') && form.has?('password')
@@ -253,7 +253,7 @@ module WFO
   }
   HTTPAuthScheme.default = [-1, nil]
     
-  def Auth.http_auth_reqauth_checker(webclient, response ,verify)
+  def Auth.http_auth_reqauth_checker(webclient, response)
     unless response.code == '401' &&
            response['www-authenticate'] &&
            response['www-authenticate'] =~ /\A\s*#{Pat::HTTP_ChallengeList}s*\z/n
