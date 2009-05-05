@@ -35,6 +35,8 @@ require 'wfo/pat'
 
 require 'wfo/workarea'
 require 'wfo/webclient'
+require 'wfo/reqhttp'
+require 'wfo/resphttp'
 
 require 'wfo/repo'
 require 'wfo/repo/tdiary'

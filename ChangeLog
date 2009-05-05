@@ -1,5 +1,13 @@
 2009-05-05  Tanaka Akira  <akr@fsij.org>
 
+	* wfo/reqhttp.rb: split from wfo/webclient.rb.
+
+	* wfo/resphttp.rb: ditto.
+
+	* wfo/main.rb: require above files.
+
+2009-05-05  Tanaka Akira  <akr@fsij.org>
+
 	* wfo/workarea.rb (WFO::WorkArea#local_text): set encoding according
 	  to locale.
 	
