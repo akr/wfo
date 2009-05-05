@@ -242,6 +242,10 @@ class WFO::WebClient
       raise "The locale character encoding, #{Mconv.internal_mime_charset}, cannot represent the page: #{uri}"
     end
     OpenURI::Meta.init result, page_str
+    if result.respond_to? :force_encoding
+      # restore encoding.  OpenURI::Meta.init set encoding accoding to charset.
+      result.force_encoding(Mconv.internal_mime_charset)
+    end
     return result, charset
   end
 
@@ -252,6 +256,10 @@ class WFO::WebClient
     end
     result = page_str.decode_charset(charset)
     OpenURI::Meta.init result, page_str
+    if result.respond_to? :force_encoding
+      # restore encoding.  OpenURI::Meta.init set encoding accoding to charset.
+      result.force_encoding(Mconv.internal_mime_charset)
+    end
     return result, charset
   end
 end

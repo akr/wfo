@@ -1,3 +1,7 @@
+Wed May  6 01:47:14 2009  Tanaka Akira  <akr@fsij.org>
+
+	* support Ruby 1.9 as well as Ruby 1.8.
+
 Mon May  4 21:56:40 2009  Tanaka Akira  <akr@fsij.org>
 
 	* wfo/main.rb: change -a to --disable-ssl-verify.

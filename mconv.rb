@@ -28,33 +28,39 @@ require 'iconv'
 
 module Mconv
   def Mconv.setup(internal_mime_charset)
-    internal_mime_charset = internal_mime_charset.downcase
-    case internal_mime_charset
-    when 'euc-jp'
-      kcode = 'e'
-    when 'euc-kr'
-      kcode = 'e'
-    when 'shift_jis'
-      kcode = 's'
-    when 'iso-8859-1'
-      kcode = 'n'
-    when 'utf-8'
-      kcode = 'u'
+    if defined?(Encoding)
+      @internal_mime_charset = Encoding.default_external.to_s
     else
-      raise "unexpected MIME charset: #{internal_mime_charset}"
+      internal_mime_charset = internal_mime_charset.downcase
+      case internal_mime_charset
+      when 'euc-jp'
+        kcode = 'e'
+      when 'euc-kr'
+        kcode = 'e'
+      when 'shift_jis'
+        kcode = 's'
+      when 'iso-8859-1'
+        kcode = 'n'
+      when 'utf-8'
+        kcode = 'u'
+      else
+        raise "unexpected MIME charset: #{internal_mime_charset}"
+      end
+      @internal_mime_charset = internal_mime_charset
+      $KCODE = kcode
     end
-    @internal_mime_charset = internal_mime_charset
-    $KCODE = kcode
   end
 
-  # xxx: euc-kr
-  case $KCODE
-  when /\Ae/i; @internal_mime_charset = 'euc-jp'
-  when /\As/i; @internal_mime_charset = 'shift_jis'
-  when /\Au/i; @internal_mime_charset = 'utf-8'
-  when /\An/i; @internal_mime_charset = 'iso-8859-1'
-  else
-    raise "unknown $KCODE: #{$KCODE.inspect}"
+  if !defined?(Encoding)
+    # xxx: euc-kr
+    case $KCODE
+    when /\Ae/i; @internal_mime_charset = 'euc-jp'
+    when /\As/i; @internal_mime_charset = 'shift_jis'
+    when /\Au/i; @internal_mime_charset = 'utf-8'
+    when /\An/i; @internal_mime_charset = 'iso-8859-1'
+    else
+      raise "unknown $KCODE: #{$KCODE.inspect}"
+    end
   end
 
   def Mconv.setup_locale_charset
@@ -227,6 +233,9 @@ class String
   def encode_charset_exactly(charset)
     result = Iconv.conv(charset, Mconv.internal_mime_charset, self)
     round_trip = Iconv.conv(Mconv.internal_mime_charset, charset, result)
+    if round_trip.respond_to? :force_encoding
+      round_trip.force_encoding self.encoding
+    end
     if self != round_trip
       raise ArgumentError, "not round trip"
     end

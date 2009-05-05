@@ -29,7 +29,11 @@ module WFO::Pat
         re << s
       end
     }
-    Regexp.new(re, regexp.options, regexp.kcode)
+    if regexp.respond_to? :kcode
+      Regexp.new(re, regexp.options, regexp.kcode)
+    else
+      Regexp.new(re, regexp.options)
+    end
   end
 
   # RFC 2616
