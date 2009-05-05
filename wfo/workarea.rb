@@ -85,7 +85,11 @@ class WFO::WorkArea
   end
 
   def local_text
-    @filename.open('rb') {|f| f.read }
+    result = @filename.open('rb') {|f| f.read }
+    if result.respond_to? :force_encoding
+      result.force_encoding(Encoding.default_external)
+    end
+    result
   end
 
   def local_text=(text)

@@ -1,5 +1,10 @@
 2009-05-05  Tanaka Akira  <akr@fsij.org>
 
+	* wfo/workarea.rb (WFO::WorkArea#local_text): set encoding according
+	  to locale.
+	
+2009-05-05  Tanaka Akira  <akr@fsij.org>
+
 	* support Ruby 1.9 as well as Ruby 1.8.
 
 2009-05-04  Tanaka Akira  <akr@fsij.org>
