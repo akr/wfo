@@ -1,5 +1,12 @@
 2009-05-05  Tanaka Akira  <akr@fsij.org>
 
+	* wfo/marshal.rb: new file for URI marshaling portability between
+	  Ruby 1.8 and 1.9.
+
+	* wfo/main.rb: require wfo/marshal.
+
+2009-05-05  Tanaka Akira  <akr@fsij.org>
+
 	* wfo/reqhttp.rb: split from wfo/webclient.rb.
 
 	* wfo/resphttp.rb: ditto.

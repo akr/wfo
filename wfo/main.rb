@@ -32,6 +32,7 @@ end
 
 require 'wfo/missing'
 require 'wfo/pat'
+require 'wfo/marshal'
 
 require 'wfo/workarea'
 require 'wfo/webclient'
