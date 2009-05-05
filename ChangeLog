@@ -1,32 +1,32 @@
-Wed May  6 01:47:14 2009  Tanaka Akira  <akr@fsij.org>
+2009-05-05  Tanaka Akira  <akr@fsij.org>
 
 	* support Ruby 1.9 as well as Ruby 1.8.
 
-Mon May  4 21:56:40 2009  Tanaka Akira  <akr@fsij.org>
+2009-05-04  Tanaka Akira  <akr@fsij.org>
 
 	* wfo/main.rb: change -a to --disable-ssl-verify.
 
-Mon May  4 21:49:38 2009  Tanaka Akira  <akr@fsij.org>
+2009-05-04  Tanaka Akira  <akr@fsij.org>
 
 	* wfo/webclient.rb: use @ssl_verify_default to keep SSL verification
 	  flag.
 
-Mon May  4 04:39:53 2009  Tanaka Akira  <akr@fsij.org>
+2009-05-03  Tanaka Akira  <akr@fsij.org>
 
 	* wfo/cookie.rb (WFO::Cookie#initialize): support domains which
 	  doesn't start with a dot.
 
-Mon May  4 04:07:14 2009  Tanaka Akira  <akr@fsij.org>
+2009-05-03  Tanaka Akira  <akr@fsij.org>
 
 	* wfo/repo/qwik.rb (WFO::Auth.qwik_auth_handler_typekey): support
 	  "Log in by TypeKey" as well.
 
-Mon May  4 04:06:05 2009  Tanaka Akira  <akr@fsij.org>
+2009-05-03  Tanaka Akira  <akr@fsij.org>
 
 	* wfo/auth.rb (WFO::Auth.typekey_login): use webclient to grab the
 	  login page. 
 
-Sun May  3 22:04:15 2009  Tanaka Akira  <akr@fsij.org>
+2009-05-03  Tanaka Akira  <akr@fsij.org>
 
 	* wfo/webclient.rb (WFO::ReqHTTP#body): defined.
 	  (WFO::ReqHTTP#pretty_print): defined.
