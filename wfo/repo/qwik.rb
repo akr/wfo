@@ -86,36 +86,46 @@ module WFO::Auth
     end
     qwik_login_uri = uri + ".login"
     resp = webclient.do_request_state(WFO::ReqHTTP.get(qwik_login_uri))
+    qwik_typekey_uri = nil
+    qwik_basicauth_uri = nil
     if resp.code == '200'
-      qwik_typekey_uri = nil
       HTree(resp.body).traverse_element("{http://www.w3.org/1999/xhtml}a") {|e|
+        if e.extract_text.to_s == "Log in by Basic Authentication."
+          qwik_basicauth_uri = qwik_login_uri + e.get_attr('href')
+        end
         if e.extract_text.to_s == "Login by TypeKey" ||
            e.extract_text.to_s == "Log in by TypeKey"
           qwik_typekey_uri = qwik_login_uri + e.get_attr('href')
         end
       }
-      return nil if !qwik_typekey_uri
     elsif resp.code == '302' && %r{/\.typekey\z} =~ resp['Location']
       # "https://www.codeblog.org/.typekey"
       # "https://www.codeblog.org/wg-chairs/.typekey"
       qwik_typekey_uri = URI(resp['Location'])
-    else
-      return nil
     end
 
-    resp = webclient.do_request_state(WFO::ReqHTTP.get(qwik_typekey_uri))
-    return nil if resp.code != '302'
-    typekey_uri = URI(resp['Location'])
-
-    resp = WFO::Auth.typekey_login(webclient, typekey_uri)
-
-    if resp.code == '302' # codeblog
-      codeblog_uri = URI(resp['Location'])
-      resp = webclient.do_request_state(WFO::ReqHTTP.get(codeblog_uri))
+    if qwik_basicauth_uri
+      webclient.do_request(WFO::ReqHTTP.get(qwik_basicauth_uri))
+      return WFO::ReqHTTP.get(uri)
     end
 
-    return nil if resp.code != '200'
+    if qwik_typekey_uri
+      resp = webclient.do_request_state(WFO::ReqHTTP.get(qwik_typekey_uri))
+      return nil if resp.code != '302'
+      typekey_uri = URI(resp['Location'])
 
-    return WFO::ReqHTTP.get(uri)
+      resp = WFO::Auth.typekey_login(webclient, typekey_uri)
+
+      if resp.code == '302' # codeblog
+        codeblog_uri = URI(resp['Location'])
+        resp = webclient.do_request_state(WFO::ReqHTTP.get(codeblog_uri))
+      end
+
+      return nil if resp.code != '200'
+
+      return WFO::ReqHTTP.get(uri)
+    end
+
+    nil
   end
 end

@@ -1,3 +1,7 @@
+2009-08-14  Tanaka Akira  <akr@fsij.org>
+
+	* wfo/repo/qwik.rb: support basic authentication.
+
 2009-05-05  Tanaka Akira  <akr@fsij.org>
 
 	* wfo/marshal.rb: new file for URI marshaling portability between
