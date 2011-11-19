@@ -39,6 +39,8 @@ module Mconv
         kcode = 'e'
       when 'shift_jis'
         kcode = 's'
+      when 'cp932'
+        kcode = 's'
       when 'iso-8859-1'
         kcode = 'n'
       when 'utf-8'

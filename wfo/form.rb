@@ -98,6 +98,7 @@ class WFO::Form
       @accept_charset = ['utf-8']
     end
     @accept_charset.map! {|charset| charset.downcase }
+    @accept_charset.map! {|charset| charset == 'shift_jis' ? 'cp932' : charset }
     @controls = []
     @referer_uri = referer_uri
     @orig_charset = orig_charset

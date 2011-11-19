@@ -236,6 +236,7 @@ class WFO::WebClient
     unless charset = page_str.charset
       charset = page_str.guess_charset
     end
+    charset = 'cp932' if charset.downcase == 'shift_jis'
     result = page_str.decode_charset(charset)
     round_trip = result.encode_charset(charset)
     if page_str != round_trip
