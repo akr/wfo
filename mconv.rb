@@ -1,6 +1,6 @@
-# mconv.rb - character code conversion library using iconv
+# mconv.rb - character code conversion library using iconv or Ruby 1.9
 #
-# Copyright (C) 2003,2006,2009 Tanaka Akira  <akr@fsij.org>
+# Copyright (C) 2003-2012 Tanaka Akira  <akr@fsij.org>
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -24,7 +24,9 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 # OF SUCH DAMAGE.
 
-require 'iconv'
+if !"".respond_to?(:encode)
+  require 'iconv'
+end
 
 module Mconv
   def Mconv.setup(internal_mime_charset)
@@ -106,28 +108,32 @@ module Mconv
   end
 
   def Mconv.conv(str, to, from)
-    ic = Iconv.new(to, from)
+    if str.respond_to? :encode
+      str.encode(to, from, :invalid=>:replace, :undef=>:replace)
+    else
+      ic = Iconv.new(to, from)
 
-    result = ''
-    rest = str
+      result = ''
+      rest = str
 
-    begin
-      result << ic.iconv(rest)
-    rescue Iconv::Failure
-      result << $!.success
+      begin
+        result << ic.iconv(rest)
+      rescue Iconv::Failure
+        result << $!.success
 
-      rest = $!.failed
+        rest = $!.failed
 
-      # following processing should be customizable by block?
-      result << '?'
-      rest = rest[1..-1]
+        # following processing should be customizable by block?
+        result << '?'
+        rest = rest[1..-1]
 
-      retry
+        retry
+      end
+
+      result << ic.close
+
+      result
     end
-
-    result << ic.close
-
-    result
   end
 
   CharsetTable = {
@@ -172,6 +178,9 @@ module Mconv
   end
 
   def Mconv.guess_charset_list(str)
+    if str.respond_to? :force_encoding
+      str = str.dup.force_encoding("ASCII-8BIT")
+    end
     case str
     when /\A\xff\xfe/; return ['utf-16le']
     when /\A\xfe\xff/; return ['utf-16be']
@@ -205,12 +214,22 @@ module Mconv
     end
 
     charset2 = 'us-ascii'
-    begin
-      # round trip?
-      s2 = Iconv.conv(charset, charset2, Iconv.conv(charset2, charset, string))
-      return charset2 if string == s2
-    rescue Iconv::Failure
+    if string.respond_to? :encode
+      begin
+        # round trip?
+        s2 = string.encode(charset2, charset).encode(charset, charset2)
+      rescue Encoding::InvalidByteSequenceError, Encoding::UndefinedConversionError
+        return charset
+      end
+    else
+      begin
+        # round trip?
+        s2 = Iconv.conv(charset, charset2, Iconv.conv(charset2, charset, string))
+      rescue Iconv::Failure
+        return charset
+      end
     end
+    return charset2 if string == s2
     charset
   end
 end
@@ -225,20 +244,48 @@ class String
   end
 
   def decode_charset_exc(charset)
-    Iconv.conv(Mconv.internal_mime_charset, charset, self)
+    if self.respond_to? :encode
+      self.encode(Mconv.internal_mime_charset, charset)
+    else
+      Iconv.conv(Mconv.internal_mime_charset, charset, self)
+    end
   end
 
   def encode_charset_exc(charset)
-    Iconv.conv(charset, Mconv.internal_mime_charset, self)
+    if self.respond_to? :encode
+      self.encode(charset, Mconv.internal_mime_charset)
+    else
+      Iconv.conv(charset, Mconv.internal_mime_charset, self)
+    end
   end
 
   def encode_charset_exactly(charset)
-    result = Iconv.conv(charset, Mconv.internal_mime_charset, self)
-    round_trip = Iconv.conv(Mconv.internal_mime_charset, charset, result)
+    if self.respond_to? :encode
+      result = self.encode(charset, Mconv.internal_mime_charset)
+      round_trip = result.encode(Mconv.internal_mime_charset, charset)
+    else
+      result = Iconv.conv(charset, Mconv.internal_mime_charset, self)
+      round_trip = Iconv.conv(Mconv.internal_mime_charset, charset, result)
+    end
     if round_trip.respond_to? :force_encoding
       round_trip.force_encoding self.encoding
     end
     if self != round_trip
+      if self.length != round_trip.length
+        raise ArgumentError, "not round trip (number of characters differ)"
+      end
+      s1 = self
+      s2 = round_trip
+      a1 = []; s1.each_line {|line| a1 << line }
+      a2 = []; s2.each_line {|line| a2 << line }
+      if a1.length != a2.length
+        raise ArgumentError, "not round trip (number of lines differ)"
+      end
+      a1.length.times {|i|
+        if a1[i] != a2[i]
+          raise ArgumentError, "not round trip: #{a1[i].inspect} != #{a2[i].inspect}"
+        end
+      }
       raise ArgumentError, "not round trip"
     end
     result
